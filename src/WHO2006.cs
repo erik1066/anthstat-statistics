@@ -117,6 +117,9 @@ namespace AnthStat.Statistics
                 case Indicator.WeightForHeight:
                     reference = WHO2006_WeightForHeight;
                     break;
+                case Indicator.WeightForAge:
+                    reference = WHO2006_WeightForAge;
+                    break;
                 case Indicator.ACForAge:
                     reference = WHO2006_ArmCircumference;
                     break;
