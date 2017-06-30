@@ -1,6 +1,6 @@
 # Description
 
-AnthStat is a .NET Core 1.1 class library that computes z-scores for children and adolescents using either the WHO 2006 Child Growth Standards or the WHO 2007 Growth Reference. A z-score-to-percentile converter is also provided. All code is written in C#.
+AnthStat is a .NET Core 1.1 class library that computes z-scores for children and adolescents using the WHO 2006 Child Growth Standards, the WHO 2007 Growth Reference, and the CDC 2000 Growth Charts. A z-score-to-percentile converter is provided. 
 
 Z-scores for the following indicators can be computed using the WHO 2006 Growth Standard:
 
@@ -19,13 +19,23 @@ Z-scores for the following indicators can be computed using the WHO 2007 Growth 
 * Height-for-age (61 to 228 months)
 * Weight-for-age (61 to 120 months)
 
-More information about the WHO 2006 Growth Standards can be found at http://www.who.int/childgrowth/en/.
+Z-scores for the following indicators can be computed using the CDC 2000 Growth Charts:
 
-More information about the WHO 2007 Growth Reference can be found at http://www.who.int/growthref/en/. 
+* Body mass index-for-age
+* Length/Height-for-age
+* Weight-for-age
+* Weight-for-length/height
+* Head circumference-for-age
+
+For more information and further documentation:
+
+* WHO 2006 Growth Standards: http://www.who.int/childgrowth/en/
+* WHO 2007 Growth Reference: http://www.who.int/growthref/en/
+* CDC 2000 Growth Charts: https://www.cdc.gov/growthcharts/index.htm
 
 # Usage
 
-The statistical routines are very simple to use. Let's assume one wishes to compute a z-score for a 64 month-old male who has a body mass index (BMI) of 17. Since the child's age is 64 months, one must use the WHO 2007 Growth Reference. The code would appear as such:
+Let's assume one wishes to compute a z-score for a 64 month-old male who has a body mass index (BMI) of 17:
 
 ``` cs
 var who2007 = new AnthStat.Statistics.WHO2007();
@@ -53,4 +63,4 @@ double ageDays = 32;
 double z = who2006.ComputeZScore(Indicator.BMIForAge, ageDays, bmi, Sex.Female);
 ```
 
-Some inputs are undefined per the WHO specifications. For example, the WHO 2007 Growth Reference defines ages (in months) between 61 and 228 for the BMI-for-Age indicator. Attempting to use an age value outside of this range will result in an exception since there is no data for which to compute a z-score. 
+Some inputs are undefined per the WHO and CDC specifications. For example, the WHO 2007 Growth Reference defines ages (in months) between 61 and 228 for the BMI-for-Age indicator. Attempting to use an age value outside of this range will result in an exception.
