@@ -60,142 +60,88 @@ namespace AnthStat.Statistics.Tests
             Assert.True(sw.Elapsed.TotalMilliseconds <= 5000.0); // we have problems if this takes more than this long
         }
 
-        [Fact]
-        public void ComputeZScore_Female_Bmi_Success()
+        [Theory]
+        [InlineData(24, 15.25, Sex.Female, -0.89998579698103833912656059986439)]
+        [InlineData(25, 15.0, Sex.Female, -1.0693184563449251569543525091431)]
+        [InlineData(240.5, 21.5, Sex.Female, -0.06782127757198954073396495854781)]
+        [InlineData(24.25, 15.25, Sex.Female, -0.88927079421466268379009544748404)]
+        [InlineData(240.125, 22, Sex.Female, 0.08296951497400838075264190214788)]
+        [InlineData(24, 15.5, Sex.Male, -0.89076945049192844341949062350922)]
+        [InlineData(24.1, 16, Sex.Male, -0.45013562284768823413221156006599)]
+        [InlineData(24.4, 16, Sex.Male, -0.43838189952771375580587585820972)]
+        [InlineData(25, 15.0, Sex.Male, -1.334079758137899497294611102369)]
+        [InlineData(240.5, 22.3, Sex.Male, -0.25031381193856607306216062869678)]        
+        [InlineData(240.5, 28, Sex.Male, 1.2157897308560679273003157713821)]  
+        [InlineData(240.5, 35, Sex.Male, 2.1641348570977560688006974622955)]  
+        [InlineData(240.5, 55, Sex.Male, 3.2177147927155639378143012025565)]  
+        [InlineData(240.5, 16, Sex.Male, -3.861917414824408430553929083166)]  
+        [InlineData(240.125, 22, Sex.Male, -0.35319017913424296280251821932759)]
+        public void ComputeZScore_Bmi_Success(double ageMonths, double bmi, Sex sex, double zExpected)
         {
-            // arrange
-            double correctAnswer0 = -0.89998579698103833912656059986439;
-            double correctAnswer1 = -1.0693184563449251569543525091431;
-            double correctAnswer2 = -0.06782127757198954073396495854781;
-            double correctAnswer3 = -0.88927079421466268379009544748404;
-            double correctAnswer4 = 0.08296951497400838075264190214788;
-
-            // act
-            double z0 = _fixture.CDC2000.ComputeZScore(Indicator.BMIForAge, 24, 15.25, Sex.Female);
-            double z1 = _fixture.CDC2000.ComputeZScore(Indicator.BMIForAge, 25, 15.0, Sex.Female); // interpolation
-            double z2 = _fixture.CDC2000.ComputeZScore(Indicator.BMIForAge, 240.5, 21.5, Sex.Female);
-            double z3 = _fixture.CDC2000.ComputeZScore(Indicator.BMIForAge, 24.25, 15.25, Sex.Female); // interpolation
-            double z4 = _fixture.CDC2000.ComputeZScore(Indicator.BMIForAge, 240.125, 22, Sex.Female); // interpolation
-            
-            // assert
-            Assert.True(Math.Abs(z0 - correctAnswer0) < TOLERANCE);
-            Assert.True(Math.Abs(z1 - correctAnswer1) < TOLERANCE);
-            Assert.True(Math.Abs(z2 - correctAnswer2) < TOLERANCE);
-            Assert.True(Math.Abs(z3 - correctAnswer3) < TOLERANCE);
-            Assert.True(Math.Abs(z4 - correctAnswer4) < TOLERANCE);
-        }
-
-        [Fact]
-        public void ComputeZScore_Male_Bmi_Success()
-        {
-            // arrange
-            double correctAnswer0 = -0.89076945049192844341949062350922;
-            double correctAnswer1 = -0.25031381193856607306216062869678;
-
-            // act
-            double z0 = _fixture.CDC2000.ComputeZScore(Indicator.BMIForAge, 24, 15.5, Sex.Male);
-            double z1 = _fixture.CDC2000.ComputeZScore(Indicator.BMIForAge, 240.5, 22.3, Sex.Male);
-            
-            // assert
-            Assert.True(Math.Abs(z0 - correctAnswer0) < TOLERANCE);
-            Assert.True(Math.Abs(z1 - correctAnswer1) < TOLERANCE);
+            double z = _fixture.CDC2000.ComputeZScore(Indicator.BMIForAge, ageMonths, bmi, sex);
+            Assert.True(Math.Abs(z - zExpected) < TOLERANCE);
         }
 
         [Theory]
-        [InlineData(23.5)]
-        [InlineData(23.99999)]
-        [InlineData(23.9999999999)]
-        [InlineData(0)]
-        [InlineData(-1)]
-        [InlineData(-23.999999)]
-        public void ComputeZScore_Bmi_Under_24_Fail(double ageMonths)
+        [InlineData(Sex.Female, 23.5)]
+        [InlineData(Sex.Female, 23.99999)]
+        [InlineData(Sex.Female, 23.9999999999)]
+        [InlineData(Sex.Female, 0)]
+        [InlineData(Sex.Female, -1)]
+        [InlineData(Sex.Female, -23.999999)]
+        [InlineData(Sex.Female, 240.511111)]
+        [InlineData(Sex.Female, 240.6)]
+        [InlineData(Sex.Female, 241)]
+        [InlineData(Sex.Female, 2500)]
+        [InlineData(Sex.Male, 23.5)]
+        [InlineData(Sex.Male, 23.99999)]
+        [InlineData(Sex.Male, 23.9999999999)]
+        [InlineData(Sex.Male, 0)]
+        [InlineData(Sex.Male, -1)]
+        [InlineData(Sex.Male, -23.999999)]
+        [InlineData(Sex.Male, 240.511111)]
+        [InlineData(Sex.Male, 240.6)]
+        [InlineData(Sex.Male, 241)]
+        [InlineData(Sex.Male, 2500)]
+        public void ComputeZScore_Bmi_Out_of_Range(Sex sex, double ageMonths)
         {
             Assert.Throws<ArgumentOutOfRangeException>(delegate 
             { 
-                _fixture.CDC2000.ComputeZScore(Indicator.BMIForAge, ageMonths, 16.9, Sex.Female);
+                _fixture.CDC2000.ComputeZScore(Indicator.BMIForAge, ageMonths, 16.9, sex);
             });
         }
 
         [Theory]
-        [InlineData(240.511111)]
-        [InlineData(240.6)]
-        [InlineData(241)]
-        [InlineData(2500)]
-        public void ComputeZScore_Female_Bmi_Over_228_Fail(double ageMonths)
+        [InlineData(0, 36, Sex.Male, 0.10061611037407461443909017517158)]
+        [InlineData(36, 50, Sex.Male, 0.19600185277546031314716123032251)]
+        [InlineData(0, 35, Sex.Female, 0.17548045698599557709310304242613)]
+        [InlineData(36, 49, Sex.Female, 0.23713112594777027575544725157751)]
+        public void ComputeZScore_HeadCircumference_Success(double ageMonths, double circumference, Sex sex, double zExpected)
         {
-            Assert.Throws<ArgumentOutOfRangeException>(delegate 
-            { 
-                _fixture.CDC2000.ComputeZScore(Indicator.BMIForAge, ageMonths, 16.9, Sex.Female);
-            });
+            double z = _fixture.CDC2000.ComputeZScore(Indicator.HCForAge, ageMonths, circumference, sex);
+            Assert.True(Math.Abs(z - zExpected) < TOLERANCE);
         }
 
         [Theory]
-        [InlineData(240.511111)]
-        [InlineData(240.6)]
-        [InlineData(241)]
-        [InlineData(2500)]
-        public void ComputeZScore_Male_Bmi_Over_228_Fail(double ageMonths)
+        [InlineData(Sex.Female, -0.00001)]
+        [InlineData(Sex.Female, -1)]
+        [InlineData(Sex.Female, -23.999999)]
+        [InlineData(Sex.Female, 36.00001)]
+        [InlineData(Sex.Female, 36.5)]
+        [InlineData(Sex.Female, 220)]
+        [InlineData(Sex.Female, 2500)]
+        [InlineData(Sex.Male, -0.00001)]
+        [InlineData(Sex.Male, -1)]
+        [InlineData(Sex.Male, -23.999999)]
+        [InlineData(Sex.Male, 36.00001)]
+        [InlineData(Sex.Male, 36.5)]
+        [InlineData(Sex.Male, 220)]
+        [InlineData(Sex.Male, 2500)]
+        public void ComputeZScore_HeadCircumference_Out_of_Range(Sex sex, double ageMonths)
         {
             Assert.Throws<ArgumentOutOfRangeException>(delegate 
             { 
-                _fixture.CDC2000.ComputeZScore(Indicator.BMIForAge, ageMonths, 16.9, Sex.Male);
-            });
-        }
-
-        [Fact]
-        public void ComputeZScore_Female_HeadCircumference_Success()
-        {
-            // arrange
-            double correctAnswer0 = 0.17548045698599557709310304242613;
-            double correctAnswer1 = 0.23713112594777027575544725157751;
-
-            // act
-            double z0 = _fixture.CDC2000.ComputeZScore(Indicator.HCForAge, 0, 35, Sex.Female);
-            double z1 = _fixture.CDC2000.ComputeZScore(Indicator.HCForAge, 36, 49, Sex.Female);
-            
-            // assert
-            Assert.True(Math.Abs(z0 - correctAnswer0) < TOLERANCE);
-            Assert.True(Math.Abs(z1 - correctAnswer1) < TOLERANCE);
-        }
-
-        [Fact]
-        public void ComputeZScore_Male_HeadCircumference_Success()
-        {
-            // arrange
-            double correctAnswer0 = 0.10061611037407461443909017517158;
-            double correctAnswer1 = 0.19600185277546031314716123032251;
-
-            // act
-            double z0 = _fixture.CDC2000.ComputeZScore(Indicator.HCForAge, 0, 36, Sex.Male);
-            double z1 = _fixture.CDC2000.ComputeZScore(Indicator.HCForAge, 36, 50, Sex.Male);
-            
-            // assert
-            Assert.True(Math.Abs(z0 - correctAnswer0) < TOLERANCE);
-            Assert.True(Math.Abs(z1 - correctAnswer1) < TOLERANCE);
-        }
-
-        [Theory]
-        [InlineData(-0.00001)]
-        [InlineData(-1)]
-        [InlineData(-23.999999)]
-        public void ComputeZScore_HeadCircumference_Under_0_Fail(double ageMonths)
-        {
-            Assert.Throws<ArgumentOutOfRangeException>(delegate 
-            { 
-                _fixture.CDC2000.ComputeZScore(Indicator.HCForAge, ageMonths, 42, Sex.Female);
-            });
-        }
-
-        [Theory]
-        [InlineData(36.00001)]
-        [InlineData(36.5)]
-        [InlineData(220)]
-        [InlineData(2500)]
-        public void ComputeZScore_HeadCircumference_Over_36_Fail(double ageMonths)
-        {
-            Assert.Throws<ArgumentOutOfRangeException>(delegate 
-            { 
-                _fixture.CDC2000.ComputeZScore(Indicator.HCForAge, ageMonths, 42, Sex.Female);
+                _fixture.CDC2000.ComputeZScore(Indicator.HCForAge, ageMonths, 42, sex);
             });
         }
 
@@ -211,20 +157,29 @@ namespace AnthStat.Statistics.Tests
         }
 
         [Theory]
-        [InlineData(-23.999999)]
-        [InlineData(-1)]
-        [InlineData(-0.00001)]
-        [InlineData(35.50001)]
-        [InlineData(35.6)]
-        [InlineData(36)]
-        [InlineData(36.5)]
-        [InlineData(220)]
-        [InlineData(2500)]
-        public void ComputeZScore_LengthForAge_Out_of_Range(double ageMonths)
+        [InlineData(Sex.Female, -23.999999)]
+        [InlineData(Sex.Female, -1)]
+        [InlineData(Sex.Female, -0.00001)]
+        [InlineData(Sex.Female, 35.50001)]
+        [InlineData(Sex.Female, 35.6)]
+        [InlineData(Sex.Female, 36)]
+        [InlineData(Sex.Female, 36.5)]
+        [InlineData(Sex.Female, 220)]
+        [InlineData(Sex.Female, 2500)]
+        [InlineData(Sex.Male, -23.999999)]
+        [InlineData(Sex.Male, -1)]
+        [InlineData(Sex.Male, -0.00001)]
+        [InlineData(Sex.Male, 35.50001)]
+        [InlineData(Sex.Male, 35.6)]
+        [InlineData(Sex.Male, 36)]
+        [InlineData(Sex.Male, 36.5)]
+        [InlineData(Sex.Male, 220)]
+        [InlineData(Sex.Male, 2500)]
+        public void ComputeZScore_LengthForAge_Out_of_Range(Sex sex, double ageMonths)
         {
             Assert.Throws<ArgumentOutOfRangeException>(delegate 
             { 
-                _fixture.CDC2000.ComputeZScore(Indicator.LengthForAge, ageMonths, 42, Sex.Female);
+                _fixture.CDC2000.ComputeZScore(Indicator.LengthForAge, ageMonths, 42, sex);
             });
         }
 
@@ -240,23 +195,35 @@ namespace AnthStat.Statistics.Tests
         }
 
         [Theory]
-        [InlineData(-23.999999)]
-        [InlineData(-1)]
-        [InlineData(-0.00001)]
-        [InlineData(0)]
-        [InlineData(23.5)]
-        [InlineData(23.9)]
-        [InlineData(23.9999)]
-        [InlineData(240.00001)]
-        [InlineData(240.1)]
-        [InlineData(240.5)]
-        [InlineData(241)]
-        [InlineData(2500)]
-        public void ComputeZScore_HeightForAge_Out_of_Range(double ageMonths)
+        [InlineData(Sex.Female, -23.999999)]
+        [InlineData(Sex.Female, -1)]
+        [InlineData(Sex.Female, -0.00001)]
+        [InlineData(Sex.Female, 0)]
+        [InlineData(Sex.Female, 23.5)]
+        [InlineData(Sex.Female, 23.9)]
+        [InlineData(Sex.Female, 23.9999)]
+        [InlineData(Sex.Female, 240.00001)]
+        [InlineData(Sex.Female, 240.1)]
+        [InlineData(Sex.Female, 240.5)]
+        [InlineData(Sex.Female, 241)]
+        [InlineData(Sex.Female, 2500)]
+        [InlineData(Sex.Male, -23.999999)]
+        [InlineData(Sex.Male, -1)]
+        [InlineData(Sex.Male, -0.00001)]
+        [InlineData(Sex.Male, 0)]
+        [InlineData(Sex.Male, 23.5)]
+        [InlineData(Sex.Male, 23.9)]
+        [InlineData(Sex.Male, 23.9999)]
+        [InlineData(Sex.Male, 240.00001)]
+        [InlineData(Sex.Male, 240.1)]
+        [InlineData(Sex.Male, 240.5)]
+        [InlineData(Sex.Male, 241)]
+        [InlineData(Sex.Male, 2500)]
+        public void ComputeZScore_HeightForAge_Out_of_Range(Sex sex, double ageMonths)
         {
             Assert.Throws<ArgumentOutOfRangeException>(delegate 
             { 
-                _fixture.CDC2000.ComputeZScore(Indicator.HeightForAge, ageMonths, 95, Sex.Female);
+                _fixture.CDC2000.ComputeZScore(Indicator.HeightForAge, ageMonths, 95, sex);
             });
         }
 
@@ -272,19 +239,27 @@ namespace AnthStat.Statistics.Tests
         }
 
         [Theory]
-        [InlineData(-23.999999)]
-        [InlineData(-1)]
-        [InlineData(-0.00001)]
-        [InlineData(240.00001)]
-        [InlineData(240.1)]
-        [InlineData(240.5)]
-        [InlineData(241)]
-        [InlineData(2500)]
-        public void ComputeZScore_WeightForAge_Out_of_Range(double ageMonths)
+        [InlineData(Sex.Female, -23.999999)]
+        [InlineData(Sex.Female, -1)]
+        [InlineData(Sex.Female, -0.00001)]
+        [InlineData(Sex.Female, 240.00001)]
+        [InlineData(Sex.Female, 240.1)]
+        [InlineData(Sex.Female, 240.5)]
+        [InlineData(Sex.Female, 241)]
+        [InlineData(Sex.Female, 2500)]
+        [InlineData(Sex.Male, -23.999999)]
+        [InlineData(Sex.Male, -1)]
+        [InlineData(Sex.Male, -0.00001)]
+        [InlineData(Sex.Male, 240.00001)]
+        [InlineData(Sex.Male, 240.1)]
+        [InlineData(Sex.Male, 240.5)]
+        [InlineData(Sex.Male, 241)]
+        [InlineData(Sex.Male, 2500)]
+        public void ComputeZScore_WeightForAge_Out_of_Range(Sex sex, double ageMonths)
         {
             Assert.Throws<ArgumentOutOfRangeException>(delegate 
             { 
-                _fixture.CDC2000.ComputeZScore(Indicator.WeightForAge, ageMonths, 45, Sex.Female);
+                _fixture.CDC2000.ComputeZScore(Indicator.WeightForAge, ageMonths, 45, sex);
             });
         }
 
@@ -300,16 +275,21 @@ namespace AnthStat.Statistics.Tests
         }
 
         [Theory]
-        [InlineData(-14.5)]
-        [InlineData(-44.99999)]
-        [InlineData(103.500001)]
-        [InlineData(104)]
-        [InlineData(2500)]
-        public void ComputeZScore_WeightForLength_Out_of_Range(double length)
+        [InlineData(Sex.Female, -14.5)]
+        [InlineData(Sex.Female, -44.99999)]
+        [InlineData(Sex.Female, 103.500001)]
+        [InlineData(Sex.Female, 104)]
+        [InlineData(Sex.Female, 2500)]
+        [InlineData(Sex.Male, -14.5)]
+        [InlineData(Sex.Male, -44.99999)]
+        [InlineData(Sex.Male, 103.500001)]
+        [InlineData(Sex.Male, 104)]
+        [InlineData(Sex.Male, 2500)]
+        public void ComputeZScore_WeightForLength_Out_of_Range(Sex sex, double length)
         {
             Assert.Throws<ArgumentOutOfRangeException>(delegate 
             { 
-                _fixture.CDC2000.ComputeZScore(Indicator.WeightForLength, length, 13, Sex.Female);
+                _fixture.CDC2000.ComputeZScore(Indicator.WeightForLength, length, 13, sex);
             });
         }
 
@@ -325,16 +305,21 @@ namespace AnthStat.Statistics.Tests
         }
 
         [Theory]
-        [InlineData(-14.5)]
-        [InlineData(-76.99999)]
-        [InlineData(121.500001)]
-        [InlineData(122)]
-        [InlineData(2500)]
-        public void ComputeZScore_WeightForHeight_Out_of_Range(double height)
+        [InlineData(Sex.Female, -14.5)]
+        [InlineData(Sex.Female, -76.99999)]
+        [InlineData(Sex.Female, 121.500001)]
+        [InlineData(Sex.Female, 122)]
+        [InlineData(Sex.Female, 2500)]
+        [InlineData(Sex.Male, -14.5)]
+        [InlineData(Sex.Male, -76.99999)]
+        [InlineData(Sex.Male, 121.500001)]
+        [InlineData(Sex.Male, 122)]
+        [InlineData(Sex.Male, 2500)]
+        public void ComputeZScore_WeightForHeight_Out_of_Range(Sex sex, double height)
         {
             Assert.Throws<ArgumentOutOfRangeException>(delegate 
             { 
-                _fixture.CDC2000.ComputeZScore(Indicator.WeightForHeight, height, 18, Sex.Female);
+                _fixture.CDC2000.ComputeZScore(Indicator.WeightForHeight, height, 18, sex);
             });
         }
     }
