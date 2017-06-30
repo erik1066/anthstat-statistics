@@ -29,8 +29,9 @@ namespace AnthStat.Statistics
         /// <param name="M">The median value</param>
         /// <param name="S">The S value, also known as the generalized coefficient of variation. Must be non-zero.</param>
         /// <param name="flag">Flag indicating whether the z-score falls outside a certain pre-defined range</param>
+        /// <param name="forceAdjustZ">Whether to recompute the z-score when it's over 3 or less than -3 using a special WHO-derived algorithm.</param>
         /// <returns>double; represents the z-score for the given inputs</return>
-        public static double GetZ(double rawValue, double L, double M, double S, ref double flag)
+        public static double GetZ(double rawValue, double L, double M, double S, ref double flag, bool forceAdjustZ = true)
         {
             #region Input Validation
             if (S == 0)
@@ -42,38 +43,41 @@ namespace AnthStat.Statistics
             double Z = 0;
             
             // L = 0 and L != 0 equations for Z from LMS are from https://www.cdc.gov/growthcharts/percentile_data_files.htm
-            // Note that we're not using L = 0 equation because no L values from the WHO datasets are equal to zero.
+            // Note that we're not using the L = 0 equation because no L values from the datasets are equal to zero.
             Z = (rawValue / M);
             Z = Math.Pow(Z, L);
             Z = Z - 1;
             Z = Z / (L * S);
 
-            // Re-calculates Z if the LMS z-score is above 3 or below -3, as per http://www.who.int/childgrowth/standards/Chap_7.pdf
+            // Re-calculates Z if the z-score is above 3 or below -3, as per http://www.who.int/childgrowth/standards/Chap_7.pdf
             // Note - Do not use (or at least, double-check if should be used) this code path if ever implementing CDC 2000 
             // growth references
-            if (Z > 3)
+            if (forceAdjustZ)
             {
-                double SD3pos = 0;
-                double SD2pos = 0;
-                double SD23pos = 0;
+                if (Z > 3)
+                {
+                    double SD3pos = 0;
+                    double SD2pos = 0;
+                    double SD23pos = 0;
 
-                SD3pos = M * Math.Pow((1 + L * S * 3), 1 / L);
-                SD2pos = M * Math.Pow((1 + L * S * 2), 1 / L);
-                SD23pos = SD3pos - SD2pos;
+                    SD3pos = M * Math.Pow((1 + L * S * 3), 1 / L);
+                    SD2pos = M * Math.Pow((1 + L * S * 2), 1 / L);
+                    SD23pos = SD3pos - SD2pos;
 
-                Z = 3 + ((rawValue - SD3pos) / SD23pos);
-            }
-            else if (Z < -3)
-            {
-                double SD3neg = 0;
-                double SD2neg = 0;
-                double SD23neg = 0;
+                    Z = 3 + ((rawValue - SD3pos) / SD23pos);
+                }
+                else if (Z < -3)
+                {
+                    double SD3neg = 0;
+                    double SD2neg = 0;
+                    double SD23neg = 0;
 
-                SD3neg = M * Math.Pow((1 + L * S * (-3)), 1 / L);
-                SD2neg = M * Math.Pow((1 + L * S * (-2)), 1 / L);
-                SD23neg = SD2neg - SD3neg;
+                    SD3neg = M * Math.Pow((1 + L * S * (-3)), 1 / L);
+                    SD2neg = M * Math.Pow((1 + L * S * (-2)), 1 / L);
+                    SD23neg = SD2neg - SD3neg;
 
-                Z = (-3) + ((rawValue - SD3neg) / SD23neg);
+                    Z = (-3) + ((rawValue - SD3neg) / SD23neg);
+                }
             }
 
             double stddev = 0;

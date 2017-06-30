@@ -147,7 +147,7 @@ namespace AnthStat.Statistics
             {
                 // found it
                 var lookup = reference[index];
-                return StatHelper.GetZ(measurement2, lookup.L, lookup.M, lookup.S, ref flag);
+                return StatHelper.GetZ(measurement2, lookup.L, lookup.M, lookup.S, ref flag, true);
             }
             else if (index == -1 && (indicator == Indicator.WeightForLength || indicator == Indicator.WeightForHeight))
             {
@@ -155,7 +155,7 @@ namespace AnthStat.Statistics
                 // indicators are age-based and go day-by-day, so it is not worth interpolating between days and we'll just use whole
                 // numbers there.
                 var interpolatedLMS = StatHelper.InterpolateLMS(measurement2, sex, reference, InterpolationMode.Tenths);
-                return StatHelper.GetZ(measurement2, interpolatedLMS.Item1, interpolatedLMS.Item2, interpolatedLMS.Item3, ref flag);
+                return StatHelper.GetZ(measurement2, interpolatedLMS.Item1, interpolatedLMS.Item2, interpolatedLMS.Item3, ref flag, true);
             }
             else 
             {

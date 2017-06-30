@@ -81,7 +81,7 @@ namespace AnthStat.Statistics
                 {
                     // found it
                     var lookup = reference[index];
-                    return StatHelper.GetZ(measurement, lookup.L, lookup.M, lookup.S, ref flag);
+                    return StatHelper.GetZ(measurement, lookup.L, lookup.M, lookup.S, ref flag, true);
                 }
                 else 
                 {
@@ -91,7 +91,7 @@ namespace AnthStat.Statistics
             else 
             {
                 var interpolatedLMS = StatHelper.InterpolateLMS(age, sex, reference);
-                return StatHelper.GetZ(measurement, interpolatedLMS.Item1, interpolatedLMS.Item2, interpolatedLMS.Item3, ref flag);
+                return StatHelper.GetZ(measurement, interpolatedLMS.Item1, interpolatedLMS.Item2, interpolatedLMS.Item3, ref flag, true);
             }
         }
     }

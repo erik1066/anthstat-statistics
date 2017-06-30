@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 
 namespace AnthStat.Statistics
 {
@@ -146,12 +145,12 @@ namespace AnthStat.Statistics
 
             if (found)
             {
-                return StatHelper.GetZ(measurement2, lookup.L, lookup.M, lookup.S, ref flag);
+                return StatHelper.GetZ(measurement2, lookup.L, lookup.M, lookup.S, ref flag, false);
             }            
             else 
             {
                 var interpolatedValues = InterpolateLMS(sex, measurement1, reference);
-                return StatHelper.GetZ(measurement2, interpolatedValues.Item1, interpolatedValues.Item2, interpolatedValues.Item3, ref flag);
+                return StatHelper.GetZ(measurement2, interpolatedValues.Item1, interpolatedValues.Item2, interpolatedValues.Item3, ref flag, false);
             }
         }
 
