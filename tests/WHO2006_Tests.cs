@@ -7,6 +7,7 @@ namespace AnthStat.Statistics.Tests
     public class WHO2006_Tests : IClassFixture<AnthStatFixture>
     {
         private readonly AnthStatFixture _fixture;
+        private static double TOLERANCE = 0.0000001;
 
         public WHO2006_Tests(AnthStatFixture fixture)
         {
@@ -393,184 +394,75 @@ namespace AnthStat.Statistics.Tests
             });
         }
 
-        [Fact]
-        public void ComputeZScore_Female_ACForAge_Success()
-        {            
-            // arrange
-            double correctAnswer0 = 0.40589404468054411701689483303183;
-            double correctAnswer1 = -0.24320811728720011655502617969338;
-
-            // act
-            double flag0 = 0.0;
-            double z0 = _fixture.WHO2006.ComputeZScore(Indicator.ACForAge, 91, 13.47, Sex.Female, ref flag0);
-
-            double flag1 = 0.0;
-            double z1 = _fixture.WHO2006.ComputeZScore(Indicator.ACForAge, 1856, 16.52, Sex.Female, ref flag1);            
-            
-            // assert
-            Assert.True(Math.Abs(z0 - correctAnswer0) < 0.00000001);
-            Assert.True(Math.Abs(z1 - correctAnswer1) < 0.00000001);
-        }
-
-        [Fact]
-        public void ComputeZScore_Male_ACForAge_Success()
-        {            
-            // arrange
-            double correctAnswer0 = -0.0078438450518674409912225165818;
-            double correctAnswer1 = -0.0213971396073446674965169466961;
-
-            // act
-            double flag0 = 0.0;
-            double z0 = _fixture.WHO2006.ComputeZScore(Indicator.ACForAge, 91, 13.47, Sex.Male, ref flag0);
-
-            double flag1 = 0.0;
-            double z1 = _fixture.WHO2006.ComputeZScore(Indicator.ACForAge, 1856, 16.52, Sex.Male, ref flag1);            
-            
-            // assert
-            Assert.True(Math.Abs(z0 - correctAnswer0) < 0.00000001);
-            Assert.True(Math.Abs(z1 - correctAnswer1) < 0.00000001);
+        [Theory]
+        [InlineData(91, 13.47, Sex.Female, 0.40589404468054411701689483303183)]
+        [InlineData(1856, 16.52, Sex.Female, -0.24320811728720011655502617969338)]
+        [InlineData(91, 10.0, Sex.Male, -3.7349383304814340206542860924399)]
+        [InlineData(91, 13.47, Sex.Male, -0.0078438450518674409912225165818)]
+        [InlineData(91, 18, Sex.Male, 4.14902572751170699082570728562)]
+        [InlineData(1856, 16.52, Sex.Male, -0.0213971396073446674965169466961)]
+        public void ComputeZScore_ACForAge_Success(int ageDays, double circumference, Sex sex, double zExpected)
+        {
+            double z = _fixture.WHO2006.ComputeZScore(Indicator.ACForAge, ageDays, circumference, sex);
+            Assert.True(Math.Abs(z - zExpected) < TOLERANCE);
         }
 
         [Theory]
-        [InlineData(1857)]
-        [InlineData(2000)]
-        public void ComputeZScore_Female_ACForAge_Over_1856_Fail(int ageDays)
+        [InlineData(Sex.Female, 0)]
+        [InlineData(Sex.Female, 90)]
+        [InlineData(Sex.Female, 1857)]
+        [InlineData(Sex.Female, 2000)]        
+        [InlineData(Sex.Male, 0)]
+        [InlineData(Sex.Male, 90)]
+        [InlineData(Sex.Male, 1857)]
+        [InlineData(Sex.Male, 2000)]
+        public void ComputeZScore_ACForAge_Out_of_Range(Sex sex, int ageDays)
         {
             Assert.Throws<InvalidOperationException>(delegate 
             { 
                 double flag = 0;
-                _fixture.WHO2006.ComputeZScore(Indicator.ACForAge, ageDays, 21.00, Sex.Female, ref flag);
+                _fixture.WHO2006.ComputeZScore(Indicator.ACForAge, ageDays, 21.00, sex, ref flag);
             });
         }
 
         [Theory]
-        [InlineData(1857)]
-        [InlineData(2000)]
-        public void ComputeZScore_Male_ACForAge_Over_1856_Fail(int ageDays)
-        {
-            Assert.Throws<InvalidOperationException>(delegate 
-            { 
-                double flag = 0;
-                _fixture.WHO2006.ComputeZScore(Indicator.ACForAge, ageDays, 21.00, Sex.Male, ref flag);
-            });
-        }
-
-        [Theory]
-        [InlineData(90)]
-        [InlineData(0)]
-        public void ComputeZScore_Female_ACForAge_Under_91_Fail(int ageDays)
-        {
-            Assert.Throws<InvalidOperationException>(delegate 
-            { 
-                double flag = 0;
-                _fixture.WHO2006.ComputeZScore(Indicator.ACForAge, ageDays, 8.50, Sex.Female, ref flag);
-            });
-        }
-
-        [Theory]
-        [InlineData(90)]
-        [InlineData(0)]
-        public void ComputeZScore_Male_ACForAge_Under_91_Fail(int ageDays)
-        {
-            Assert.Throws<InvalidOperationException>(delegate 
-            { 
-                double flag = 0;
-                _fixture.WHO2006.ComputeZScore(Indicator.ACForAge, ageDays, 8.50, Sex.Male, ref flag);
-            });
-        }
-
-        [Fact]
-        public void ComputeZScore_Female_HCForAge_Success()
+        [InlineData(0, 34, Sex.Female, 0.10241478078755314955626554581229)]
+        [InlineData(1856, 50, Sex.Female, 0.02445522308245640089097517490151)]
+        [InlineData(0, 25, Sex.Male, -7.4486998645416401940428746905989)]
+        [InlineData(0, 34, Sex.Male, -0.36354706265671747887389286733164)]
+        [InlineData(0, 38.5, Sex.Male, 3.179029338285743878710598044302)]
+        [InlineData(0, 48.5, Sex.Male, 11.051421340380102451120577847932)]
+        [InlineData(1856, 50, Sex.Male, -0.51788656191369656140211656443226)]
+        public void ComputeZScore_HCForAge_Success(int ageDays, double circumference, Sex sex, double zExpected)
         {            
-            // arrange
-            double correctAnswer0 = 0.10241478078755314955626554581229;
-            double correctAnswer1 = 0.02445522308245640089097517490151;
-
-            // act
-            double flag0 = 0.0;
-            double z0 = _fixture.WHO2006.ComputeZScore(Indicator.HCForAge, 0, 34.0, Sex.Female, ref flag0);
-
-            double flag1 = 0.0;
-            double z1 = _fixture.WHO2006.ComputeZScore(Indicator.HCForAge, 1856, 50.0, Sex.Female, ref flag1);            
-            
-            // assert
-            Assert.True(Math.Abs(z0 - correctAnswer0) < 0.00000001);
-            Assert.True(Math.Abs(z1 - correctAnswer1) < 0.00000001);
-        }
-
-        [Fact]
-        public void ComputeZScore_Male_HCForAge_Success()
-        {            
-            // arrange
-            double correctAnswer0 = -0.36354706265671747887389286733164;
-            double correctAnswer1 = -0.51788656191369656140211656443226;
-
-            // act
-            double flag0 = 0.0;
-            double z0 = _fixture.WHO2006.ComputeZScore(Indicator.HCForAge, 0, 34.0, Sex.Male, ref flag0);
-
-            double flag1 = 0.0;
-            double z1 = _fixture.WHO2006.ComputeZScore(Indicator.HCForAge, 1856, 50.0, Sex.Male, ref flag1);            
-            
-            // assert
-            Assert.True(Math.Abs(z0 - correctAnswer0) < 0.00000001);
-            Assert.True(Math.Abs(z1 - correctAnswer1) < 0.00000001);
+            double z = _fixture.WHO2006.ComputeZScore(Indicator.HCForAge, ageDays, circumference, sex);
+            Assert.True(Math.Abs(z - zExpected) < TOLERANCE);
         }
 
         [Theory]
-        [InlineData(1857)]
-        [InlineData(2500)]
-        public void ComputeZScore_Female_HCForAge_Over_1856_Fail(int ageDays)
+        [InlineData(Sex.Female, 1857)]
+        [InlineData(Sex.Female, 2000)]        
+        [InlineData(Sex.Male, 1857)]
+        [InlineData(Sex.Male, 2000)]
+        public void ComputeZScore_HCForAge_Over_1856_Fail(Sex sex, int ageDays)
         {
             Assert.Throws<InvalidOperationException>(delegate 
             { 
                 double flag = 0;
-                _fixture.WHO2006.ComputeZScore(Indicator.HCForAge, ageDays, 50, Sex.Female, ref flag);
+                _fixture.WHO2006.ComputeZScore(Indicator.HCForAge, ageDays, 50, sex, ref flag);
             });
         }
 
         [Theory]
-        [InlineData(1857)]
-        [InlineData(2500)]
-        public void ComputeZScore_Male_HCForAge_Over_1856_Fail(int ageDays)
+        [InlineData(0, 49, Sex.Female, -0.07929359105980168560136240669803)]
+        [InlineData(1856, 110, Sex.Female, 0.01352542775910235322705902688034)]        
+        [InlineData(0, 49, Sex.Male, -0.46706327321797969208676755180545)]
+        [InlineData(0, 56, Sex.Male, 3.23056499247514159790121351881)]
+        [InlineData(1856, 110, Sex.Male, -0.10641170700920362584779158876099)]
+        public void ComputeZScore_HeightForAge_Success(int ageDays, double height, Sex sex, double zExpected)
         {
-            Assert.Throws<InvalidOperationException>(delegate 
-            { 
-                double flag = 0;
-                _fixture.WHO2006.ComputeZScore(Indicator.HCForAge, ageDays, 50, Sex.Male, ref flag);
-            });
-        }
-
-        [Fact]
-        public void ComputeZScore_Female_HeightForAge_Success()
-        {            
-            // arrange
-            double correctAnswer0 = -0.07929359105980168560136240669803;
-            double correctAnswer1 = 0.01352542775910235322705902688034;
-
-            // act
-            double z0 = _fixture.WHO2006.ComputeZScore(Indicator.HeightForAge, 0, 49.0, Sex.Female);
-            double z1 = _fixture.WHO2006.ComputeZScore(Indicator.HeightForAge, 1856, 110.0, Sex.Female);
-
-            // assert
-            Assert.True(Math.Abs(z0 - correctAnswer0) < 0.00000001);
-            Assert.True(Math.Abs(z1 - correctAnswer1) < 0.00000001);
-        }
-
-        [Fact]
-        public void ComputeZScore_Male_HeightForAge_Success()
-        {            
-            // arrange
-            double correctAnswer0 = -0.46706327321797969208676755180545;
-            double correctAnswer1 = -0.10641170700920362584779158876099;
-
-            // act
-            double z0 = _fixture.WHO2006.ComputeZScore(Indicator.HeightForAge, 0, 49.0, Sex.Male);
-            double z1 = _fixture.WHO2006.ComputeZScore(Indicator.HeightForAge, 1856, 110.0, Sex.Male);
-            
-            // assert
-            Assert.True(Math.Abs(z0 - correctAnswer0) < 0.00000001);
-            Assert.True(Math.Abs(z1 - correctAnswer1) < 0.00000001);
+            double z = _fixture.WHO2006.ComputeZScore(Indicator.HeightForAge, ageDays, height, sex);
+            Assert.True(Math.Abs(z - zExpected) < TOLERANCE);
         }
 
         [Theory]
@@ -595,36 +487,15 @@ namespace AnthStat.Statistics.Tests
             });
         }
 
-        [Fact]
-        public void ComputeZScore_Female_SSFForAge_Success()
-        {            
-            // arrange
-            double correctAnswer0 = -0.06131747268213446329236853256366;
-            double correctAnswer1 = 0.00799538263959151494094926122301;
-
-            // act
-            double z0 = _fixture.WHO2006.ComputeZScore(Indicator.SSFForAge, 91, 7.7, Sex.Female);
-            double z1 = _fixture.WHO2006.ComputeZScore(Indicator.SSFForAge, 1856, 6.1, Sex.Female);            
-            
-            // assert
-            Assert.True(Math.Abs(z0 - correctAnswer0) < 0.00000001);
-            Assert.True(Math.Abs(z1 - correctAnswer1) < 0.00000001);
-        }
-
-        [Fact]
-        public void ComputeZScore_Male_SSFForAge_Success()
-        {            
-            // arrange
-            double correctAnswer0 = -0.0708299062152796216572904695866;
-            double correctAnswer1 = -0.05088789162859622106978046123322;
-
-            // act
-            double z0 = _fixture.WHO2006.ComputeZScore(Indicator.SSFForAge, 91, 7.6, Sex.Male);
-            double z1 = _fixture.WHO2006.ComputeZScore(Indicator.SSFForAge, 1856, 5.3, Sex.Male);            
-            
-            // assert
-            Assert.True(Math.Abs(z0 - correctAnswer0) < 0.00000001);
-            Assert.True(Math.Abs(z1 - correctAnswer1) < 0.00000001);
+        [Theory]        
+        [InlineData(91, 7.7, Sex.Female, -0.06131747268213446329236853256366)]
+        [InlineData(1856, 6.1, Sex.Female, 0.00799538263959151494094926122301)]
+        [InlineData(91, 7.6, Sex.Male, -0.0708299062152796216572904695866)]
+        [InlineData(1856, 5.3, Sex.Male, -0.05088789162859622106978046123322)]
+        public void ComputeZScore_SSFForAge_Success(int ageDays, double size, Sex sex, double zExpected)
+        {
+            double z = _fixture.WHO2006.ComputeZScore(Indicator.SSFForAge, ageDays, size, sex);
+            Assert.True(Math.Abs(z - zExpected) < TOLERANCE);
         }
 
         [Theory]
@@ -649,36 +520,16 @@ namespace AnthStat.Statistics.Tests
             });
         }
 
-        [Fact]
-        public void ComputeZScore_Female_TSFForAge_Success()
-        {            
-            // arrange
-            double correctAnswer0 = -0.03125237709867160097513556893842;
-            double correctAnswer1 = -0.0230172170416324610038564541254;
-
-            // act
-            double z0 = _fixture.WHO2006.ComputeZScore(Indicator.TSFForAge, 91, 9.7, Sex.Female);
-            double z1 = _fixture.WHO2006.ComputeZScore(Indicator.TSFForAge, 1856, 8.8, Sex.Female);
-            
-            // assert
-            Assert.True(Math.Abs(z0 - correctAnswer0) < 0.00000001);
-            Assert.True(Math.Abs(z1 - correctAnswer1) < 0.00000001);
-        }
-
-        [Fact]
-        public void ComputeZScore_Male_TSFForAge_Success()
-        {            
-            // arrange
-            double correctAnswer0 = -0.04069912797972332197733952426044;
-            double correctAnswer1 = -0.03016340611257267952018295944132;
-
-            // act
-            double z0 = _fixture.WHO2006.ComputeZScore(Indicator.TSFForAge, 91, 9.7, Sex.Male);
-            double z1 = _fixture.WHO2006.ComputeZScore(Indicator.TSFForAge, 1856, 7.5, Sex.Male);
-            
-            // assert
-            Assert.True(Math.Abs(z0 - correctAnswer0) < 0.00000001);
-            Assert.True(Math.Abs(z1 - correctAnswer1) < 0.00000001);
+        [Theory]
+        [InlineData(91, 5.0, Sex.Female, -3.5142247600701533771333268236099)]
+        [InlineData(91, 9.7, Sex.Female, -0.03125237709867160097513556893842)]
+        [InlineData(1856, 8.8, Sex.Female, -0.0230172170416324610038564541254)]
+        [InlineData(91, 9.7, Sex.Male, -0.04069912797972332197733952426044)]
+        [InlineData(1856, 7.5, Sex.Male, -0.03016340611257267952018295944132)]
+        public void ComputeZScore_TSFForAge_Success(int ageDays, double size, Sex sex, double zExpected)
+        {
+            double z = _fixture.WHO2006.ComputeZScore(Indicator.TSFForAge, ageDays, size, sex);
+            Assert.True(Math.Abs(z - zExpected) < TOLERANCE);
         }
 
         [Theory]
@@ -703,36 +554,16 @@ namespace AnthStat.Statistics.Tests
             });
         }
 
-        [Fact]
-        public void ComputeZScore_Female_WeightForAge_Success()
-        {            
-            // arrange
-            double correctAnswer0 = 0.14707318200802968181756145307487;
-            double correctAnswer1 = 0.21822735544234463823321703627513;
-
-            // act
-            double z0 = _fixture.WHO2006.ComputeZScore(Indicator.WeightForAge, 0, 3.3, Sex.Female);
-            double z1 = _fixture.WHO2006.ComputeZScore(Indicator.WeightForAge, 1856, 19, Sex.Female);
-            
-            // assert
-            Assert.True(Math.Abs(z0 - correctAnswer0) < 0.00000001);
-            Assert.True(Math.Abs(z1 - correctAnswer1) < 0.00000001);
-        }
-
-        [Fact]
-        public void ComputeZScore_Male_WeightForAge_Success()
-        {            
-            // arrange
-            double correctAnswer0 = 0.10912474665759200634554969904103;
-            double correctAnswer1 = 0.19724633372363914420000515095729;
-
-            // act
-            double z0 = _fixture.WHO2006.ComputeZScore(Indicator.WeightForAge, 0, 3.4, Sex.Male);
-            double z1 = _fixture.WHO2006.ComputeZScore(Indicator.WeightForAge, 1856, 19, Sex.Male);
-            
-            // assert
-            Assert.True(Math.Abs(z0 - correctAnswer0) < 0.00000001);
-            Assert.True(Math.Abs(z1 - correctAnswer1) < 0.00000001);
+        [Theory]
+        [InlineData(0, 3.3, Sex.Female, 0.14707318200802968181756145307487)]
+        [InlineData(1856, 19, Sex.Female, 0.21822735544234463823321703627513)]
+        [InlineData(0, 3.4, Sex.Male, 0.10912474665759200634554969904103)]
+        [InlineData(0, 5.7, Sex.Male, 4.09500520234497951877138782449)]
+        [InlineData(1856, 19, Sex.Male, 0.19724633372363914420000515095729)]
+        public void ComputeZScore_WeightForAge_Success(int ageDays, double weight, Sex sex, double zExpected)
+        {      
+            double z = _fixture.WHO2006.ComputeZScore(Indicator.WeightForAge, ageDays, weight, sex);
+            Assert.True(Math.Abs(z - zExpected) < TOLERANCE);
         }
 
         [Theory]
