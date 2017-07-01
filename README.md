@@ -3,7 +3,7 @@
 Latest version: 1.1.1
 Released: 7/1/2017
 
-AnthStat computes z-scores for children and adolescents using the WHO 2006 Child Growth Standards, the WHO 2007 Growth Reference, and the CDC 2000 Growth Charts. A z-score-to-percentile converter is provided.
+AnthStat computes z-scores for children and adolescents using the WHO 2006 Child Growth Standards, the WHO 2007 Growth Reference, and the CDC 2000 Growth Charts. Z-scores can be used to determine if a child is growing appropriately and to predict their expected adult height and weight.
 
 Z-scores for the following indicators can be computed using the WHO 2006 Growth Standard:
 
@@ -51,9 +51,11 @@ double z = who2007.ComputeZScore(Indicator.BMIForAge, ageMonths, bmi, Sex.Male);
 
 To get a percentile from the z-score:
 
-```
+``` cs
 p = StatHelper.GetPercentile(z);
 ```
+
+Their z-score is 1.22 which equates to a percentile of 88.90.
 
 To use the WHO 2006 Growth Standards to compute a z-score for a 32 day-old female with a BMI of 16:
 
@@ -77,7 +79,7 @@ double ageMonths = 24;
 double z = cdc2000.ComputeZScore(Indicator.BMIForAge, ageMonths, bmi, Sex.Female);
 ```
 
-Some inputs are undefined per the WHO and CDC specifications. For example, the WHO 2007 Growth Reference defines ages between 61 and 228 months for the BMI-for-Age indicator. Attempting to use an age value outside of this range will result in an exception. Callers can avoid the possibility of an exception by asking ahead of time for a validation check:
+Some inputs are undefined per the WHO and CDC specifications. For example, the WHO 2007 Growth Reference defines ages between 61 and 228 months for the BMI-for-Age indicator. Attempting to use an age value outside of this range will result in an ```ArgumentOutOfRangeException```. Callers can avoid exceptions by asking ahead of time for a validation check:
 
 ``` cs
 var cdc2000 = new AnthStat.Statistics.CDC2000();
@@ -91,13 +93,19 @@ if (isValid)
 
 # Important Notes
 
+## Unit of measure for age and interpolation
+
+The lookup values for the WHO 2006 Growth Standards are indexed by age in days. Therefore, all age-based input to the ComputeZScore method in the WHO2006 class must supply the age in days. Supplying a non-integer day value (such a 4.5) will cause the value to be rounded to the nearest whole number to avoid interpolation. The only two indicators for the WHO 2006 Growth Standards that can accept decimal values are weight-for-length and weight-for-height. If a decimal value is supplied that is not found in the lookup table for these two indicators, then interpolation of the L, M, and S values will occur.
+
+The WHO 2007 and CDC 2000 data sets are indexed by age in months. Age-based inputs to their ComputeZScore methods may supply either a whole-numbered month or a decimal month. Age in days or other units is unsupported. If a decimal month value is supplied and the decimal value is not found in the lookup table for that indicator, then interpolation of the L, M, and S values will occur to derive a z-score.
+
 ## Z-score recomputation
 
-When using the WHO 2006 Growth Standards, z-scores for any weight- and/or height-based indicators that are above 3 or below -3 will be recomputed per WHO guidelines <cite>\[1\]</cite>. This recomputation does not occur for any other z-scores.
+When using the WHO 2006 Growth Standards and the WHO 2007 Growth Reference, z-scores that are above 3 or below -3 will be recomputed per WHO guidelines <cite>\[1\]</cite> <cite>\[2\]</cite> <cite>\[3\]</cite>. This recomputation does not occur when generating z-scores using the CDC 2000 Growth Charts.
 
 ## Discrepancies versus WHO Anthro
 
-There will be discrepancies when comparing z-scores computed using AnthStat.Statistics and those computed using the "WHO Anthro" software package (http://www.who.int/childgrowth/software/en/) under certain conditions. This occurs because WHO Anthro adds 0.7cm to a child's length when the child is < 24 months old and measured standing up, and subtracts 0.7cm from the child's height when they are >= 24 months old and measured lying down <cite>\[2\]</cite>. These adjustments are made internally by the WHO Anthro software and are not shown to the user, though they are documented in the WHO Anthro user manual. The adjusted height or length is used to compute all other length/height-based indicators, which include BMI-for-age, Weight-for-Age, Weight-for-Length, Weight-for-Height, and Height-for-Age.
+There will be discrepancies when comparing z-scores computed using AnthStat.Statistics and those computed using the "WHO Anthro" software package (http://www.who.int/childgrowth/software/en/) under certain conditions. This occurs because WHO Anthro adds 0.7cm to a child's length when the child is < 24 months old and measured standing up, and subtracts 0.7cm from the child's height when they are >= 24 months old and measured lying down <cite>\[4\]</cite>. These adjustments are made internally by the WHO Anthro software and are not shown to the user, though they are documented in the WHO Anthro user manual. This adjusted height or length is used to compute all other length/height-based indicators, which include BMI-for-age, Weight-for-Age, Weight-for-Length, Weight-for-Height, and Height-for-Age.
 
 AnthStat.Statistics does __not__ change the measurement inputs it is provided. It assumes that the caller has made the decision about whether and how to adjust the inputs before supplying them to this library.
 
@@ -107,12 +115,18 @@ CDC's Epi Info 7.2.1 for Windows Desktop software suite (see https://www.cdc.gov
 
 # Quality Assurance
 
-There are over 375 automated unit tests that check the software's computed z-scores against a set of hand-computed (using a calculator tool) z-scores for the same set of input measurements. The hand-computed z-scores relied on the WHO or CDC growth data files to obtain their L, M, and S values, which were obtained from their respective websites, and were not derived from the software's internal source code. Both interpolated and non-interpolated z-scores are checked under various conditions. Every indicator for each of the three growth data sets (WHO 2006, WHO 2007, and CDC 2000) are checked extensively. 
+There are over 200 unit tests that check the software's computed z-scores against a set of hand-computed (using a calculator tool) z-scores for the same set of input measurements. The hand-computed z-scores relied on the WHO or CDC growth data files to obtain their L, M, and S values. The hand-computing process used L, M, and S values from the CDC and WHO websites, not from the software's source code; this was done in case the transformation from text files to C# was done incorrectly. Both interpolated and non-interpolated z-scores are checked under various conditions. Every indicator for each of the three growth data sets (WHO 2006, WHO 2007, and CDC 2000) are checked extensively. 
 
-The WHO Anthro software was used a second source of truth, supplementing the hand-computing the values, for deriving unit tests using the WHO 2006 Growth Standards.
+The WHO Anthro software was used a second source of truth when deriving the expected z-score outputs for unit tests targeting the WHO 2006 Growth Standards. These supplemented the hand-computed expected z-score outputs.
+
+Performance testing shows that AnthStat.Statistics can compute 1,000,000 z-scores from the WHO 2006 Growth Standards in about 900 milliseconds on a modern desktop CPU.
 
 # References
 
 \[1\] http://www.who.int/childgrowth/standards/Chap_7.pdf
 
-\[2\] http://www.who.int/childgrowth/software/anthro_pc_manual_v322.pdf (pages 8-9)
+\[2\] http://www.who.int/childgrowth/standards/second_set/tr2chap_7.pdf
+
+\[3\] http://www.who.int/growthref/computation.pdf
+
+\[4\] http://www.who.int/childgrowth/software/anthro_pc_manual_v322.pdf (pages 8-9)

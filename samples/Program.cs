@@ -55,6 +55,9 @@ namespace samples
             double z = cdc2000.ComputeZScore(Indicator.BMIForAge, ageMonths, bmi, Sex.Female);
             double p = StatHelper.GetPercentile(z);
 
+            z = Math.Round(z, 2);
+            p = Math.Round(p, 2);
+
             Console.WriteLine($"[CDC 2000] - {ageMonths} month old female with BMI = {bmi} has z-score of {z.ToString("N2")} and percentile of {p.ToString("N2")}");
         }
 
@@ -68,6 +71,9 @@ namespace samples
             double z = who2006.ComputeZScore(Indicator.BMIForAge, ageDays, bmi, Sex.Female);
             double p = StatHelper.GetPercentile(z);
 
+            z = Math.Round(z, 2);
+            p = Math.Round(p, 2);
+
             Console.WriteLine($"[WHO 2006] - {ageDays} day old female with BMI = {bmi} has z-score of {z.ToString("N2")} and percentile of {p.ToString("N2")}");
         }
 
@@ -80,6 +86,9 @@ namespace samples
 
             double z = who2007.ComputeZScore(Indicator.BMIForAge, ageMonths, bmi, Sex.Male);
             double p = StatHelper.GetPercentile(z);
+
+            z = Math.Round(z, 2);
+            p = Math.Round(p, 2);
 
             Console.WriteLine($"[WHO 2007] - {ageMonths} month old male with BMI = {bmi} has z-score of {z.ToString("N2")} and percentile of {p.ToString("N2")}");
         }
