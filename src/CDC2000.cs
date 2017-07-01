@@ -92,6 +92,33 @@ namespace AnthStat.Statistics
         }
 
         /// <summary>
+        /// Computes a z-score for the given indicator, age in months (or height/length depending on the indicator), 
+        /// measurement value, and gender. A return value indicates whether the computation succeeded or failed.
+        /// </summary>
+        /// <param name="indicator">The indicator to use for computing the z-score (e.g. BMI, Height-for-Age, Weight-for-Age, etc.)</param>
+        /// <param name="measurement1">The first measurement; typically age of the child in months. If not age, must be in metric units.</param>
+        /// <param name="measurement2">The second measurement value. Must be in metric units.</param>
+        /// <param name="sex">Whether the child is male or female</param>
+        /// <param name="z">The computed z-score for the given set of inputs</param>
+        /// <returns>bool; whether the computation succeeded or failed</return>
+        public bool TryComputeZScore(Indicator indicator, double measurement1, double measurement2, Sex sex, ref double z)
+        {
+            bool success = false;
+            if (IsValidMeasurement(indicator, measurement1))
+            {
+                try 
+                {
+                    z = ComputeZScore(indicator, measurement1, measurement2, sex);
+                    success = true;
+                }
+                catch (Exception)
+                {                    
+                }
+            }
+            return success;
+        }
+
+        /// <summary>
         /// Gets a z-score for the given indicator, age in months, measurement value, and gender.
         /// </summary>
         /// <param name="indicator">The indicator to use for computing the z-score (e.g. BMI, Height-for-Age, Weight-for-Age, etc.)</param>

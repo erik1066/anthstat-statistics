@@ -42,6 +42,7 @@ namespace AnthStat.Statistics.Tests
         {
             double z = _fixture.WHO2007.ComputeZScore(Indicator.BMIForAge, ageMonths, bmi, sex);
             Assert.True(Math.Abs(z - zExpected) < TOLERANCE);
+            Assert.True(_fixture.WHO2007.TryComputeZScore(Indicator.BMIForAge, ageMonths, bmi, sex, ref z));
         }
 
         [Theory]
@@ -61,9 +62,11 @@ namespace AnthStat.Statistics.Tests
         {
             Assert.Throws<ArgumentOutOfRangeException>(delegate 
             { 
-                double flag = 0;
-                _fixture.WHO2007.ComputeZScore(Indicator.BMIForAge, ageMonths, 16.9, sex, ref flag);
+                _fixture.WHO2007.ComputeZScore(Indicator.BMIForAge, ageMonths, 16.9, sex);
             });
+            double z = -99;
+            Assert.False(_fixture.WHO2007.TryComputeZScore(Indicator.BMIForAge, ageMonths, 16.9, sex, ref z));
+            Assert.True(z == -99);
         }
 
         [Theory]
@@ -75,6 +78,7 @@ namespace AnthStat.Statistics.Tests
         {            
             double z = _fixture.WHO2007.ComputeZScore(Indicator.HeightForAge, ageMonths, height, sex);
             Assert.True(Math.Abs(z - zExpected) < TOLERANCE);
+            Assert.True(_fixture.WHO2007.TryComputeZScore(Indicator.HeightForAge, ageMonths, height, sex, ref z));
         }
 
         [Theory]
@@ -94,9 +98,11 @@ namespace AnthStat.Statistics.Tests
         {
             Assert.Throws<ArgumentOutOfRangeException>(delegate 
             { 
-                double flag = 0;
-                _fixture.WHO2007.ComputeZScore(Indicator.HeightForAge, ageMonths, 50, sex, ref flag);
+                _fixture.WHO2007.ComputeZScore(Indicator.HeightForAge, ageMonths, 50, sex);
             });
+            double z = -99;
+            Assert.False(_fixture.WHO2007.TryComputeZScore(Indicator.HeightForAge, ageMonths, 50, sex, ref z));
+            Assert.True(z == -99);
         }
 
         [Theory]
@@ -108,6 +114,7 @@ namespace AnthStat.Statistics.Tests
         {            
             double z = _fixture.WHO2007.ComputeZScore(Indicator.WeightForAge, ageMonths, weight, sex);
             Assert.True(Math.Abs(z - zExpected) < TOLERANCE);
+            Assert.True(_fixture.WHO2007.TryComputeZScore(Indicator.WeightForAge, ageMonths, weight, sex, ref z));
         }
 
         [Theory]
@@ -127,9 +134,11 @@ namespace AnthStat.Statistics.Tests
         {
             Assert.Throws<ArgumentOutOfRangeException>(delegate 
             { 
-                double flag = 0;
-                _fixture.WHO2007.ComputeZScore(Indicator.WeightForAge, ageMonths, 50, sex, ref flag);
+                _fixture.WHO2007.ComputeZScore(Indicator.WeightForAge, ageMonths, 50, sex);
             });
+            double z = -99;
+            Assert.False(_fixture.WHO2007.TryComputeZScore(Indicator.WeightForAge, ageMonths, 50, sex, ref z));
+            Assert.True(z == -99);
         }
     }
 }

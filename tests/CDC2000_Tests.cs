@@ -80,6 +80,7 @@ namespace AnthStat.Statistics.Tests
         {
             double z = _fixture.CDC2000.ComputeZScore(Indicator.BMIForAge, ageMonths, bmi, sex);
             Assert.True(Math.Abs(z - zExpected) < TOLERANCE);
+            Assert.True(_fixture.CDC2000.TryComputeZScore(Indicator.BMIForAge, ageMonths, bmi, sex, ref z));
         }
 
         [Theory]
@@ -109,6 +110,9 @@ namespace AnthStat.Statistics.Tests
             { 
                 _fixture.CDC2000.ComputeZScore(Indicator.BMIForAge, ageMonths, 16.9, sex);
             });
+            double z = -99;
+            Assert.False(_fixture.CDC2000.TryComputeZScore(Indicator.BMIForAge, ageMonths, 16.9, sex, ref z));
+            Assert.True(z == -99);
         }
 
         [Theory]
@@ -120,6 +124,7 @@ namespace AnthStat.Statistics.Tests
         {
             double z = _fixture.CDC2000.ComputeZScore(Indicator.HCForAge, ageMonths, circumference, sex);
             Assert.True(Math.Abs(z - zExpected) < TOLERANCE);
+            Assert.True(_fixture.CDC2000.TryComputeZScore(Indicator.HCForAge, ageMonths, circumference, sex, ref z));
         }
 
         [Theory]
@@ -143,6 +148,9 @@ namespace AnthStat.Statistics.Tests
             { 
                 _fixture.CDC2000.ComputeZScore(Indicator.HCForAge, ageMonths, 42, sex);
             });
+            double z = -99;
+            Assert.False(_fixture.CDC2000.TryComputeZScore(Indicator.HCForAge, ageMonths, 42, sex, ref z));
+            Assert.True(z == -99);
         }
 
         [Theory]
@@ -154,6 +162,7 @@ namespace AnthStat.Statistics.Tests
         {
             double z = _fixture.CDC2000.ComputeZScore(Indicator.LengthForAge, ageMonths, length, sex);
             Assert.True(Math.Abs(z - zExpected) < TOLERANCE);
+            Assert.True(_fixture.CDC2000.TryComputeZScore(Indicator.LengthForAge, ageMonths, length, sex, ref z));
         }
 
         [Theory]
@@ -181,6 +190,9 @@ namespace AnthStat.Statistics.Tests
             { 
                 _fixture.CDC2000.ComputeZScore(Indicator.LengthForAge, ageMonths, 42, sex);
             });
+            double z = -99;
+            Assert.False(_fixture.CDC2000.TryComputeZScore(Indicator.LengthForAge, ageMonths, 42, sex, ref z));
+            Assert.True(z == -99);
         }
 
         [Theory]
@@ -192,6 +204,7 @@ namespace AnthStat.Statistics.Tests
         {
             double z = _fixture.CDC2000.ComputeZScore(Indicator.HeightForAge, ageMonths, height, sex);
             Assert.True(Math.Abs(z - zExpected) < TOLERANCE);
+            Assert.True(_fixture.CDC2000.TryComputeZScore(Indicator.HeightForAge, ageMonths, height, sex, ref z));
         }
 
         [Theory]
@@ -225,6 +238,9 @@ namespace AnthStat.Statistics.Tests
             { 
                 _fixture.CDC2000.ComputeZScore(Indicator.HeightForAge, ageMonths, 95, sex);
             });
+            double z = -99;
+            Assert.False(_fixture.CDC2000.TryComputeZScore(Indicator.HeightForAge, ageMonths, 95, sex, ref z));
+            Assert.True(z == -99);
         }
 
         [Theory]
@@ -236,6 +252,7 @@ namespace AnthStat.Statistics.Tests
         {
             double z = _fixture.CDC2000.ComputeZScore(Indicator.WeightForAge, ageMonths, weight, sex);
             Assert.True(Math.Abs(z - zExpected) < TOLERANCE);
+            Assert.True(_fixture.CDC2000.TryComputeZScore(Indicator.WeightForAge, ageMonths, weight, sex, ref z));
         }
 
         [Theory]
@@ -261,6 +278,9 @@ namespace AnthStat.Statistics.Tests
             { 
                 _fixture.CDC2000.ComputeZScore(Indicator.WeightForAge, ageMonths, 45, sex);
             });
+            double z = -99;
+            Assert.False(_fixture.CDC2000.TryComputeZScore(Indicator.WeightForAge, ageMonths, 45, sex, ref z));
+            Assert.True(z == -99);
         }
 
         [Theory]
@@ -272,6 +292,7 @@ namespace AnthStat.Statistics.Tests
         {
             double z = _fixture.CDC2000.ComputeZScore(Indicator.WeightForLength, length, weight, sex);
             Assert.True(Math.Abs(z - zExpected) < TOLERANCE);
+            Assert.True(_fixture.CDC2000.TryComputeZScore(Indicator.WeightForLength, length, weight, sex, ref z));
         }
 
         [Theory]
@@ -291,6 +312,9 @@ namespace AnthStat.Statistics.Tests
             { 
                 _fixture.CDC2000.ComputeZScore(Indicator.WeightForLength, length, 13, sex);
             });
+            double z = -99;
+            Assert.False(_fixture.CDC2000.TryComputeZScore(Indicator.WeightForLength, length, 13, sex, ref z));
+            Assert.True(z == -99);
         }
 
         [Theory]
@@ -302,6 +326,7 @@ namespace AnthStat.Statistics.Tests
         {
             double z = _fixture.CDC2000.ComputeZScore(Indicator.WeightForHeight, height, weight, sex);
             Assert.True(Math.Abs(z - zExpected) < TOLERANCE);
+            Assert.True(_fixture.CDC2000.TryComputeZScore(Indicator.WeightForHeight, height, weight, sex, ref z));
         }
 
         [Theory]
@@ -321,6 +346,9 @@ namespace AnthStat.Statistics.Tests
             { 
                 _fixture.CDC2000.ComputeZScore(Indicator.WeightForHeight, height, 18, sex);
             });
+            double z = -99;
+            Assert.False(_fixture.CDC2000.TryComputeZScore(Indicator.WeightForHeight, height, 18, sex, ref z));
+            Assert.True(z == -99);
         }
     }
 }

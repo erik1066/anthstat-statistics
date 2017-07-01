@@ -63,17 +63,30 @@ namespace AnthStat.Statistics
         }
 
         /// <summary>
-        /// Gets a z-score for the given indicator, age in months, measurement value, and gender.
+        /// Computes a z-score for the given indicator, age in months, measurement value, and gender. A return 
+        /// value indicates whether the computation succeeded or failed.
         /// </summary>
         /// <param name="indicator">The indicator to use for computing the z-score (e.g. BMI, Height-for-Age, Weight-for-Age)</param>
         /// <param name="age">The age of the child in months</param>
         /// <param name="measurement">The raw measurement value in metric units</param>
         /// <param name="sex">Whether the child is male or female</param>
-        /// <returns>double; the z-score for the given inputs</return>
-        public double ComputeZScore(Indicator indicator, double measurement1, double measurement2, Sex sex)
+        /// <param name="z">The computed z-score for the given set of inputs</param>
+        /// <returns>bool; whether the computation succeeded or failed</return>
+        public bool TryComputeZScore(Indicator indicator, double age, double measurement, Sex sex, ref double z)
         {
-            double flag = 0;
-            return ComputeZScore(indicator, measurement1, measurement2, sex, ref flag);
+            bool success = false;
+            if (IsValidMeasurement(indicator, age))
+            {
+                try 
+                {
+                    z = ComputeZScore(indicator, age, measurement, sex);
+                    success = true;
+                }
+                catch (Exception)
+                {                    
+                }
+            }
+            return success;
         }
 
         /// <summary>
@@ -83,9 +96,8 @@ namespace AnthStat.Statistics
         /// <param name="age">The age of the child in months</param>
         /// <param name="measurement">The raw measurement value in metric units</param>
         /// <param name="sex">Whether the child is male or female</param>
-        /// <param name="flag">A flag used for computing whether the z-score falls inside or outside a certain predetermined measurement range</param>
         /// <returns>double; the z-score for the given inputs</return>
-        public double ComputeZScore(Indicator indicator, double age, double measurement, Sex sex, ref double flag)
+        public double ComputeZScore(Indicator indicator, double age, double measurement, Sex sex)
         {
             if (!IsValidMeasurement(indicator, age))
             {
@@ -108,6 +120,8 @@ namespace AnthStat.Statistics
                 default:
                     throw new ArgumentOutOfRangeException(nameof(indicator));
             }
+
+            double flag = 0;
 
             if (StatHelper.IsWholeNumber(age))
             {
