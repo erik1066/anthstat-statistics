@@ -7,7 +7,6 @@ namespace AnthStat.Statistics.Tests
 {
     public class Lookup_Tests
     {
-
         [Fact]
         public void Lookup_Construct_Success()
         {

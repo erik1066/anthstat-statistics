@@ -104,6 +104,11 @@ namespace AnthStat.Statistics
         /// <returns>double; the z-score for the given inputs</return>
         public double ComputeZScore(Indicator indicator, double measurement1, double measurement2, Sex sex, ref double flag)
         {
+            if (!IsValidMeasurement(indicator, measurement1))
+            {
+                throw new ArgumentOutOfRangeException(nameof(measurement1));
+            }
+            
             List<Lookup> reference = null;
 
             switch (indicator)

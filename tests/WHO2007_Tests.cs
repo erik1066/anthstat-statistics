@@ -35,7 +35,9 @@ namespace AnthStat.Statistics.Tests
         [InlineData(61.5, 15.0, Sex.Female, -0.1671289054811777288751676405857)]
         [InlineData(228, 21.5, Sex.Female, 0.02355411236719574110048857287015)]
         [InlineData(61, 15.5, Sex.Male, 0.18176176947909595711292281530935)]
+        [InlineData(228, 14, Sex.Male, -4.0916811844026938377310090778574)]
         [InlineData(228, 22.3, Sex.Male, 0.03870061632191970322614664167712)]
+        [InlineData(228, 48, Sex.Male, 5.1521182359390728771444244525155)]
         public void ComputeZScore_Bmi_Success(double ageMonths, double bmi, Sex sex, double zExpected)
         {
             double z = _fixture.WHO2007.ComputeZScore(Indicator.BMIForAge, ageMonths, bmi, sex);
@@ -45,11 +47,9 @@ namespace AnthStat.Statistics.Tests
         [Theory]
         [InlineData(Sex.Female, 60.999)]
         [InlineData(Sex.Female, 60)]
-        [InlineData(Sex.Female, 32)]
         [InlineData(Sex.Female, 0)]
         [InlineData(Sex.Male, 60.999)]
         [InlineData(Sex.Male, 60)]
-        [InlineData(Sex.Male, 32)]
         [InlineData(Sex.Male, 0)]
         [InlineData(Sex.Female, 228.001)]
         [InlineData(Sex.Female, 229)]
@@ -59,7 +59,7 @@ namespace AnthStat.Statistics.Tests
         [InlineData(Sex.Male, 2500)]
         public void ComputeZScore_Bmi_Out_of_Range(Sex sex, double ageMonths)
         {
-            Assert.Throws<InvalidOperationException>(delegate 
+            Assert.Throws<ArgumentOutOfRangeException>(delegate 
             { 
                 double flag = 0;
                 _fixture.WHO2007.ComputeZScore(Indicator.BMIForAge, ageMonths, 16.9, sex, ref flag);
@@ -78,15 +78,21 @@ namespace AnthStat.Statistics.Tests
         }
 
         [Theory]
+        [InlineData(Sex.Female, 0)]
+        [InlineData(Sex.Female, 60)]
+        [InlineData(Sex.Female, 60.999)]
         [InlineData(Sex.Female, 228.001)]
         [InlineData(Sex.Female, 229)]
         [InlineData(Sex.Female, 2500)]
+        [InlineData(Sex.Male, 0)]
+        [InlineData(Sex.Male, 60)]
+        [InlineData(Sex.Male, 60.999)]
         [InlineData(Sex.Male, 228.001)]
         [InlineData(Sex.Male, 229)]
         [InlineData(Sex.Male, 2500)]
         public void ComputeZScore_HeightForAge_Out_of_Range(Sex sex, double ageMonths)
         {
-            Assert.Throws<InvalidOperationException>(delegate 
+            Assert.Throws<ArgumentOutOfRangeException>(delegate 
             { 
                 double flag = 0;
                 _fixture.WHO2007.ComputeZScore(Indicator.HeightForAge, ageMonths, 50, sex, ref flag);
@@ -105,15 +111,21 @@ namespace AnthStat.Statistics.Tests
         }
 
         [Theory]
+        [InlineData(Sex.Female, 0)]
+        [InlineData(Sex.Female, 60)]
+        [InlineData(Sex.Female, 60.999)]
         [InlineData(Sex.Female, 120.001)]
         [InlineData(Sex.Female, 121)]
         [InlineData(Sex.Female, 2500)]
+        [InlineData(Sex.Male, 0)]
+        [InlineData(Sex.Male, 60)]
+        [InlineData(Sex.Male, 60.999)]
         [InlineData(Sex.Male, 120.001)]
         [InlineData(Sex.Male, 121)]
         [InlineData(Sex.Male, 2500)]
         public void ComputeZScore_WeightForAge_Out_of_Range(Sex sex, double ageMonths)
         {
-            Assert.Throws<InvalidOperationException>(delegate 
+            Assert.Throws<ArgumentOutOfRangeException>(delegate 
             { 
                 double flag = 0;
                 _fixture.WHO2007.ComputeZScore(Indicator.WeightForAge, ageMonths, 50, sex, ref flag);

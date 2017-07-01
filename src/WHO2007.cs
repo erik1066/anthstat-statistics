@@ -30,6 +30,39 @@ namespace AnthStat.Statistics
         }
 
         /// <summary>
+        /// Determines whether a given pair of measurements (measurement1-for-measurement2, as in "BMI for Age") are valid for a given indicator
+        /// </summary>
+        /// <param name="indicator">The indicator to which the measurements belong</param>
+        /// <param name="age">The age of the child in months.</param>
+        /// <returns>bool; whether or not the provided measurements is valid for the given indicator. Also returns false if the indicator is invalid for the growth reference.</return>
+        public bool IsValidMeasurement(Indicator indicator, double age)
+        {
+            if (!IsValidIndicator(indicator)) 
+            {
+                return false;
+            }
+
+            double cutoffLower = 61;
+            double cutoffUpper = 228;
+
+            switch (indicator)
+            {
+                case Indicator.WeightForAge:
+                    cutoffUpper = 120;
+                    break;
+            }
+
+            if (age < cutoffLower || age > cutoffUpper)
+            {
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+        }
+
+        /// <summary>
         /// Gets a z-score for the given indicator, age in months, measurement value, and gender.
         /// </summary>
         /// <param name="indicator">The indicator to use for computing the z-score (e.g. BMI, Height-for-Age, Weight-for-Age)</param>
@@ -54,6 +87,11 @@ namespace AnthStat.Statistics
         /// <returns>double; the z-score for the given inputs</return>
         public double ComputeZScore(Indicator indicator, double age, double measurement, Sex sex, ref double flag)
         {
+            if (!IsValidMeasurement(indicator, age))
+            {
+                throw new ArgumentOutOfRangeException(nameof(age));
+            }
+
             List<Lookup> reference = null;
 
             switch (indicator)
