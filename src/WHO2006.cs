@@ -110,6 +110,7 @@ namespace AnthStat.Statistics
             }
             
             List<Lookup> reference = null;
+            bool shouldRound = true;
 
             switch (indicator)
             {
@@ -118,9 +119,11 @@ namespace AnthStat.Statistics
                     break;
                 case Indicator.WeightForLength:
                     reference = WHO2006_WeightForLength;
+                    shouldRound = false;
                     break;
                 case Indicator.WeightForHeight:
                     reference = WHO2006_WeightForHeight;
+                    shouldRound = false;
                     break;
                 case Indicator.WeightForAge:
                     reference = WHO2006_WeightForAge;
@@ -143,6 +146,11 @@ namespace AnthStat.Statistics
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(indicator));
+            }
+
+            if (shouldRound && !StatHelper.IsWholeNumber(measurement1))
+            {
+                measurement1 = Math.Round(measurement1, 0);
             }
 
             var lookupRef = new Lookup(sex, measurement1, 0, 0, 0);
