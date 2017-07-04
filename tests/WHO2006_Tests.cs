@@ -20,11 +20,11 @@ namespace AnthStat.Statistics.Tests
             Assert.True(_fixture.WHO2006.IsValidIndicator(Indicator.BMIForAge));
             Assert.True(_fixture.WHO2006.IsValidIndicator(Indicator.WeightForAge));
             Assert.True(_fixture.WHO2006.IsValidIndicator(Indicator.HeightForAge));
-            Assert.True(_fixture.WHO2006.IsValidIndicator(Indicator.ACForAge));
-            Assert.True(_fixture.WHO2006.IsValidIndicator(Indicator.HCForAge));
+            Assert.True(_fixture.WHO2006.IsValidIndicator(Indicator.ArmCircumferenceForAge));
+            Assert.True(_fixture.WHO2006.IsValidIndicator(Indicator.HeadCircumferenceForAge));
             Assert.True(_fixture.WHO2006.IsValidIndicator(Indicator.LengthForAge));
-            Assert.True(_fixture.WHO2006.IsValidIndicator(Indicator.SSFForAge));
-            Assert.True(_fixture.WHO2006.IsValidIndicator(Indicator.TSFForAge));
+            Assert.True(_fixture.WHO2006.IsValidIndicator(Indicator.SubscapularSkinfoldForAge));
+            Assert.True(_fixture.WHO2006.IsValidIndicator(Indicator.TricepsSkinfoldForAge));
             Assert.True(_fixture.WHO2006.IsValidIndicator(Indicator.WeightForHeight));
             Assert.True(_fixture.WHO2006.IsValidIndicator(Indicator.WeightForLength));
         }
@@ -52,7 +52,7 @@ namespace AnthStat.Statistics.Tests
 
             for (int i = 0; i < loopIterations; i++)
             {                
-                _fixture.WHO2006.ComputeZScore(Indicator.BMIForAge, ageDays[i], bmis[i], sexes[i]);
+                _fixture.WHO2006.CalculateZScore(Indicator.BMIForAge, ageDays[i], bmis[i], sexes[i]);
             }
 
             sw.Stop();
@@ -84,9 +84,9 @@ namespace AnthStat.Statistics.Tests
         [InlineData(1, 13.1, Sex.Male, -0.23455795334480738910148700514505)]
         public void ComputeZScore_Bmi_Success(double ageDays, double bmi, Sex sex, double zExpected)
         {
-            double z = _fixture.WHO2006.ComputeZScore(Indicator.BMIForAge, ageDays, bmi, sex);
+            double z = _fixture.WHO2006.CalculateZScore(Indicator.BMIForAge, ageDays, bmi, sex);
             Assert.True(Math.Abs(z - zExpected) < TOLERANCE);
-            Assert.True(_fixture.WHO2006.TryComputeZScore(Indicator.BMIForAge, ageDays, bmi, sex, ref z));
+            Assert.True(_fixture.WHO2006.TryCalculateZScore(Indicator.BMIForAge, ageDays, bmi, sex, ref z));
         }
 
         [Theory]
@@ -102,10 +102,10 @@ namespace AnthStat.Statistics.Tests
         {
             Assert.Throws<ArgumentOutOfRangeException>(delegate 
             { 
-                _fixture.WHO2006.ComputeZScore(Indicator.BMIForAge, ageDays, 16.9, sex);
+                _fixture.WHO2006.CalculateZScore(Indicator.BMIForAge, ageDays, 16.9, sex);
             });
             double z = -99;
-            Assert.False(_fixture.WHO2006.TryComputeZScore(Indicator.BMIForAge, ageDays, 16.9, sex, ref z));
+            Assert.False(_fixture.WHO2006.TryCalculateZScore(Indicator.BMIForAge, ageDays, 16.9, sex, ref z));
             Assert.True(z == -99);
         }
 
@@ -115,11 +115,18 @@ namespace AnthStat.Statistics.Tests
         [InlineData(49.9, 3.50, Sex.Male, 0.62961642936973316222835417730078)]
         [InlineData(45, 2.4, Sex.Male, -0.18503233427487158999085862877748)]
         [InlineData(110, 16.5, Sex.Male, -1.184325245059326230973893688293)]
-        public void ComputeZScore_WeightLength_Success(double height, double weight, Sex sex, double zExpected)
+        [InlineData(48.11, 3, Sex.Male, 0.12086456422878706425391774812276)]
+        [InlineData(48.12, 3, Sex.Male, 0.11423445276668658923783528848242)]
+        [InlineData(48.14, 3, Sex.Male, 0.10097930917477510889387908318526)]
+        [InlineData(48.15, 3, Sex.Male, 0.09435427263638165932776181841041)]
+        [InlineData(48.16, 3, Sex.Male, 0.08773092333637678467749638108213)]
+        [InlineData(48.1625, 3, Sex.Male, 0.08607534938498995730954412438918)]
+        [InlineData(48.165, 3, Sex.Male, 0.08441988071448012043777759061347)]
+        public void ComputeZScore_WeightLength_Success(double length, double weight, Sex sex, double zExpected)
         {
-            double z = _fixture.WHO2006.ComputeZScore(Indicator.WeightForLength, height, weight, sex);
+            double z = _fixture.WHO2006.CalculateZScore(Indicator.WeightForLength, length, weight, sex);
             Assert.True(Math.Abs(z - zExpected) < TOLERANCE);
-            Assert.True(_fixture.WHO2006.TryComputeZScore(Indicator.WeightForLength, height, weight, sex, ref z));
+            Assert.True(_fixture.WHO2006.TryCalculateZScore(Indicator.WeightForLength, length, weight, sex, ref z));
         }
 
         [Theory]
@@ -143,10 +150,10 @@ namespace AnthStat.Statistics.Tests
         {
             Assert.Throws<ArgumentOutOfRangeException>(delegate 
             { 
-                _fixture.WHO2006.ComputeZScore(Indicator.WeightForLength, length, 16.50, sex);
+                _fixture.WHO2006.CalculateZScore(Indicator.WeightForLength, length, 16.50, sex);
             });
             double z = -99;
-            Assert.False(_fixture.WHO2006.TryComputeZScore(Indicator.WeightForLength, length, 16.50, sex, ref z));
+            Assert.False(_fixture.WHO2006.TryCalculateZScore(Indicator.WeightForLength, length, 16.50, sex, ref z));
             Assert.True(z == -99);
         }
 
@@ -154,12 +161,14 @@ namespace AnthStat.Statistics.Tests
         [InlineData(65, 8.0, Sex.Female, 1.0743800294516307983167802998867)]
         [InlineData(120, 21, Sex.Female, -0.85806737835475871013745232431556)]
         [InlineData(65, 8, Sex.Male, 0.88363276925258927969686943523615)]
+        [InlineData(65.365, 7.6, Sex.Male, 0.13072210313950426077703597885603)]
+        [InlineData(65.39, 7.6, Sex.Male, 0.12125168507130893864622645927044)]
         [InlineData(120, 21, Sex.Male, -0.66988002648118219306594721792577)]
         public void ComputeZScore_WeightHeight_Success(double height, double weight, Sex sex, double zExpected)
         {
-            double z = _fixture.WHO2006.ComputeZScore(Indicator.WeightForHeight, height, weight, sex);
+            double z = _fixture.WHO2006.CalculateZScore(Indicator.WeightForHeight, height, weight, sex);
             Assert.True(Math.Abs(z - zExpected) < TOLERANCE);
-            Assert.True(_fixture.WHO2006.TryComputeZScore(Indicator.WeightForHeight, height, weight, sex, ref z));
+            Assert.True(_fixture.WHO2006.TryCalculateZScore(Indicator.WeightForHeight, height, weight, sex, ref z));
         }
 
         [Theory]
@@ -183,10 +192,10 @@ namespace AnthStat.Statistics.Tests
         {
             Assert.Throws<ArgumentOutOfRangeException>(delegate 
             { 
-                _fixture.WHO2006.ComputeZScore(Indicator.WeightForHeight, height, 8.50, sex);
+                _fixture.WHO2006.CalculateZScore(Indicator.WeightForHeight, height, 8.50, sex);
             });
             double z = -99;
-            Assert.False(_fixture.WHO2006.TryComputeZScore(Indicator.WeightForHeight, height, 8.50, sex, ref z));
+            Assert.False(_fixture.WHO2006.TryCalculateZScore(Indicator.WeightForHeight, height, 8.50, sex, ref z));
             Assert.True(z == -99);
         }
 
@@ -199,9 +208,9 @@ namespace AnthStat.Statistics.Tests
         [InlineData(1856, 16.52, Sex.Male, -0.0213971396073446674965169466961)]
         public void ComputeZScore_ACForAge_Success(int ageDays, double circumference, Sex sex, double zExpected)
         {
-            double z = _fixture.WHO2006.ComputeZScore(Indicator.ACForAge, ageDays, circumference, sex);
+            double z = _fixture.WHO2006.CalculateZScore(Indicator.ArmCircumferenceForAge, ageDays, circumference, sex);
             Assert.True(Math.Abs(z - zExpected) < TOLERANCE);
-            Assert.True(_fixture.WHO2006.TryComputeZScore(Indicator.ACForAge, ageDays, circumference, sex, ref z));
+            Assert.True(_fixture.WHO2006.TryCalculateZScore(Indicator.ArmCircumferenceForAge, ageDays, circumference, sex, ref z));
         }
 
         [Theory]
@@ -217,10 +226,10 @@ namespace AnthStat.Statistics.Tests
         {
             Assert.Throws<ArgumentOutOfRangeException>(delegate 
             { 
-                _fixture.WHO2006.ComputeZScore(Indicator.ACForAge, ageDays, 21.00, sex);
+                _fixture.WHO2006.CalculateZScore(Indicator.ArmCircumferenceForAge, ageDays, 21.00, sex);
             });
             double z = -99;
-            Assert.False(_fixture.WHO2006.TryComputeZScore(Indicator.ACForAge, ageDays, 21.00, sex, ref z));
+            Assert.False(_fixture.WHO2006.TryCalculateZScore(Indicator.ArmCircumferenceForAge, ageDays, 21.00, sex, ref z));
             Assert.True(z == -99);
         }
 
@@ -236,9 +245,9 @@ namespace AnthStat.Statistics.Tests
         [InlineData(1856, 50, Sex.Male, -0.51788656191369656140211656443226)]
         public void ComputeZScore_HCForAge_Success(double ageDays, double circumference, Sex sex, double zExpected)
         {            
-            double z = _fixture.WHO2006.ComputeZScore(Indicator.HCForAge, ageDays, circumference, sex);
+            double z = _fixture.WHO2006.CalculateZScore(Indicator.HeadCircumferenceForAge, ageDays, circumference, sex);
             Assert.True(Math.Abs(z - zExpected) < TOLERANCE);
-            Assert.True(_fixture.WHO2006.TryComputeZScore(Indicator.HCForAge, ageDays, circumference, sex, ref z));
+            Assert.True(_fixture.WHO2006.TryCalculateZScore(Indicator.HeadCircumferenceForAge, ageDays, circumference, sex, ref z));
         }
 
         [Theory]
@@ -256,10 +265,10 @@ namespace AnthStat.Statistics.Tests
         {
             Assert.Throws<ArgumentOutOfRangeException>(delegate 
             { 
-                _fixture.WHO2006.ComputeZScore(Indicator.HCForAge, ageDays, 50, sex);
+                _fixture.WHO2006.CalculateZScore(Indicator.HeadCircumferenceForAge, ageDays, 50, sex);
             });
             double z = -99;
-            Assert.False(_fixture.WHO2006.TryComputeZScore(Indicator.HCForAge, ageDays, 50, sex, ref z));
+            Assert.False(_fixture.WHO2006.TryCalculateZScore(Indicator.HeadCircumferenceForAge, ageDays, 50, sex, ref z));
             Assert.True(z == -99);
         }
 
@@ -271,9 +280,9 @@ namespace AnthStat.Statistics.Tests
         [InlineData(1856, 110, Sex.Male, -0.10641170700920362584779158876099)]
         public void ComputeZScore_HeightForAge_Success(int ageDays, double height, Sex sex, double zExpected)
         {
-            double z = _fixture.WHO2006.ComputeZScore(Indicator.HeightForAge, ageDays, height, sex);
+            double z = _fixture.WHO2006.CalculateZScore(Indicator.HeightForAge, ageDays, height, sex);
             Assert.True(Math.Abs(z - zExpected) < TOLERANCE);
-            Assert.True(_fixture.WHO2006.TryComputeZScore(Indicator.HeightForAge, ageDays, height, sex, ref z));
+            Assert.True(_fixture.WHO2006.TryCalculateZScore(Indicator.HeightForAge, ageDays, height, sex, ref z));
         }
 
         [Theory]
@@ -287,10 +296,10 @@ namespace AnthStat.Statistics.Tests
         {
             Assert.Throws<ArgumentOutOfRangeException>(delegate 
             {
-                _fixture.WHO2006.ComputeZScore(Indicator.HeightForAge, ageDays, 50, sex);
+                _fixture.WHO2006.CalculateZScore(Indicator.HeightForAge, ageDays, 50, sex);
             });
             double z = -99;
-            Assert.False(_fixture.WHO2006.TryComputeZScore(Indicator.HeightForAge, ageDays, 50, sex, ref z));
+            Assert.False(_fixture.WHO2006.TryCalculateZScore(Indicator.HeightForAge, ageDays, 50, sex, ref z));
             Assert.True(z == -99);
         }
 
@@ -301,9 +310,9 @@ namespace AnthStat.Statistics.Tests
         [InlineData(1856, 5.3, Sex.Male, -0.05088789162859622106978046123322)]
         public void ComputeZScore_SSFForAge_Success(int ageDays, double size, Sex sex, double zExpected)
         {
-            double z = _fixture.WHO2006.ComputeZScore(Indicator.SSFForAge, ageDays, size, sex);
+            double z = _fixture.WHO2006.CalculateZScore(Indicator.SubscapularSkinfoldForAge, ageDays, size, sex);
             Assert.True(Math.Abs(z - zExpected) < TOLERANCE);
-            Assert.True(_fixture.WHO2006.TryComputeZScore(Indicator.SSFForAge, ageDays, size, sex, ref z));
+            Assert.True(_fixture.WHO2006.TryCalculateZScore(Indicator.SubscapularSkinfoldForAge, ageDays, size, sex, ref z));
         }
 
         [Theory]
@@ -321,10 +330,10 @@ namespace AnthStat.Statistics.Tests
         {
             Assert.Throws<ArgumentOutOfRangeException>(delegate 
             {
-                _fixture.WHO2006.ComputeZScore(Indicator.SSFForAge, ageDays, 5.3, sex);
+                _fixture.WHO2006.CalculateZScore(Indicator.SubscapularSkinfoldForAge, ageDays, 5.3, sex);
             });
             double z = -99;
-            Assert.False(_fixture.WHO2006.TryComputeZScore(Indicator.SSFForAge, ageDays, 5.3, sex, ref z));
+            Assert.False(_fixture.WHO2006.TryCalculateZScore(Indicator.SubscapularSkinfoldForAge, ageDays, 5.3, sex, ref z));
             Assert.True(z == -99);
         }
 
@@ -336,9 +345,9 @@ namespace AnthStat.Statistics.Tests
         [InlineData(1856, 7.5, Sex.Male, -0.03016340611257267952018295944132)]
         public void ComputeZScore_TSFForAge_Success(int ageDays, double size, Sex sex, double zExpected)
         {
-            double z = _fixture.WHO2006.ComputeZScore(Indicator.TSFForAge, ageDays, size, sex);
+            double z = _fixture.WHO2006.CalculateZScore(Indicator.TricepsSkinfoldForAge, ageDays, size, sex);
             Assert.True(Math.Abs(z - zExpected) < TOLERANCE);
-            Assert.True(_fixture.WHO2006.TryComputeZScore(Indicator.TSFForAge, ageDays, size, sex, ref z));
+            Assert.True(_fixture.WHO2006.TryCalculateZScore(Indicator.TricepsSkinfoldForAge, ageDays, size, sex, ref z));
         }
 
         [Theory]
@@ -356,10 +365,10 @@ namespace AnthStat.Statistics.Tests
         {
             Assert.Throws<ArgumentOutOfRangeException>(delegate 
             { 
-                _fixture.WHO2006.ComputeZScore(Indicator.TSFForAge, ageDays, 5.3, sex);
+                _fixture.WHO2006.CalculateZScore(Indicator.TricepsSkinfoldForAge, ageDays, 5.3, sex);
             });
             double z = -99;
-            Assert.False(_fixture.WHO2006.TryComputeZScore(Indicator.TSFForAge, ageDays, 5.3, sex, ref z));
+            Assert.False(_fixture.WHO2006.TryCalculateZScore(Indicator.TricepsSkinfoldForAge, ageDays, 5.3, sex, ref z));
             Assert.True(z == -99);
         }
 
@@ -371,9 +380,9 @@ namespace AnthStat.Statistics.Tests
         [InlineData(1856, 19, Sex.Male, 0.19724633372363914420000515095729)]
         public void ComputeZScore_WeightForAge_Success(int ageDays, double weight, Sex sex, double zExpected)
         {      
-            double z = _fixture.WHO2006.ComputeZScore(Indicator.WeightForAge, ageDays, weight, sex);
+            double z = _fixture.WHO2006.CalculateZScore(Indicator.WeightForAge, ageDays, weight, sex);
             Assert.True(Math.Abs(z - zExpected) < TOLERANCE);
-            Assert.True(_fixture.WHO2006.TryComputeZScore(Indicator.WeightForAge, ageDays, weight, sex, ref z));
+            Assert.True(_fixture.WHO2006.TryCalculateZScore(Indicator.WeightForAge, ageDays, weight, sex, ref z));
         }
 
         [Theory]
@@ -387,10 +396,10 @@ namespace AnthStat.Statistics.Tests
         {
             Assert.Throws<ArgumentOutOfRangeException>(delegate 
             { 
-                _fixture.WHO2006.ComputeZScore(Indicator.WeightForAge, ageDays, 5.3, sex);
+                _fixture.WHO2006.CalculateZScore(Indicator.WeightForAge, ageDays, 5.3, sex);
             });
             double z = -99;
-            Assert.False(_fixture.WHO2006.TryComputeZScore(Indicator.WeightForAge, ageDays, 5.3, sex, ref z));
+            Assert.False(_fixture.WHO2006.TryCalculateZScore(Indicator.WeightForAge, ageDays, 5.3, sex, ref z));
             Assert.True(z == -99);
         }
     }

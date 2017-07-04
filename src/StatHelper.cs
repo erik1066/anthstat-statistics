@@ -19,19 +19,18 @@ namespace AnthStat.Statistics
         public static bool IsWholeNumber(double number) => Math.Abs(number % 1) <= (Double.Epsilon * 100);
 
         /// <summary>
-        /// Gets a z-score for a given raw value, L, M, and S values
+        /// Calculates a z-score for a given measurement and L, M, and S values
         /// </summary>
         /// <remarks>
         ///     See https://www.cdc.gov/growthcharts/percentile_data_files.htm for LMS to Z equations
         /// </remarks>
-        /// <param name="rawValue">The raw value</param>
+        /// <param name="measurement">The measurement value in metric units</param>
         /// <param name="L">The L value, also known as the power in the Box-Cox transformation</param>
         /// <param name="M">The median value</param>
         /// <param name="S">The S value, also known as the generalized coefficient of variation. Must be non-zero.</param>
-        /// <param name="flag">Flag indicating whether the z-score falls outside a certain pre-defined range</param>
         /// <param name="forceAdjustZ">Whether to recompute the z-score when it's over 3 or less than -3 using a special WHO-derived algorithm.</param>
         /// <returns>double; represents the z-score for the given inputs</return>
-        public static double GetZ(double rawValue, double L, double M, double S, ref double flag, bool forceAdjustZ = true)
+        public static double CalculateZScore(double measurement, double L, double M, double S, bool forceAdjustZ = true)
         {
             #region Input Validation
             if (S == 0)
@@ -43,15 +42,13 @@ namespace AnthStat.Statistics
             double Z = 0;
             
             // L = 0 and L != 0 equations for Z from LMS are from https://www.cdc.gov/growthcharts/percentile_data_files.htm
-            // Note that we're not using the L = 0 equation because no L values from the datasets are equal to zero.
-            Z = (rawValue / M);
+            // We're not using the L = 0 equation because no L values from the datasets are equal to zero.
+            Z = (measurement / M);
             Z = Math.Pow(Z, L);
             Z = Z - 1;
             Z = Z / (L * S);
 
-            // Re-calculates Z if the z-score is above 3 or below -3, as per http://www.who.int/childgrowth/standards/Chap_7.pdf
-            // Note - Do not use (or at least, double-check if should be used) this code path if ever implementing CDC 2000 
-            // growth references
+            // Re-calculates Z if the z-score is above 3 or below -3, as per http://www.who.int/childgrowth/standards/Chap_7.pdf            
             if (forceAdjustZ)
             {
                 if (Z > 3)
@@ -64,7 +61,7 @@ namespace AnthStat.Statistics
                     SD2pos = M * Math.Pow((1 + L * S * 2), 1 / L);
                     SD23pos = SD3pos - SD2pos;
 
-                    Z = 3 + ((rawValue - SD3pos) / SD23pos);
+                    Z = 3 + ((measurement - SD3pos) / SD23pos);
                 }
                 else if (Z < -3)
                 {
@@ -76,12 +73,37 @@ namespace AnthStat.Statistics
                     SD2neg = M * Math.Pow((1 + L * S * (-2)), 1 / L);
                     SD23neg = SD2neg - SD3neg;
 
-                    Z = (-3) + ((rawValue - SD3neg) / SD23neg);
+                    Z = (-3) + ((measurement - SD3neg) / SD23neg);
                 }
             }
+            return Z;
+        }
 
+        /// <summary>
+        /// Calculates a flag value for a given measurement and L, M, and S values.
+        /// </summary>
+        /// <remarks>
+        ///     Flag values were used for the CDC 2000 and NCHS 1977 Growth Standards in CDC's Windows 98-era
+        ///     Epi Info 3 software suite, specifically the "NutStat" module. This algorithm is intended for 
+        ///     clients that wish to use the same algorithm for calculating flag values.
+        /// </remarks>
+        /// <param name="measurement">The measurement in metric units</param>
+        /// <param name="L">The L value, also known as the power in the Box-Cox transformation</param>
+        /// <param name="M">The median value</param>
+        /// <param name="S">The S value, also known as the generalized coefficient of variation. Must be non-zero.</param>
+        /// <returns>double; represents the flag value for the given inputs</return>
+        public static double CalculateFlag(double measurement, double L, double M, double S)
+        {
+            #region Input Validation
+            if (S == 0)
+            {
+                throw new ArgumentException(nameof(S));
+            }
+            #endregion // Input Validation
+
+            double flag = 0;
             double stddev = 0;
-            if (rawValue < M)
+            if (measurement < M)
             {
                 stddev = M * (1 - Math.Pow((1 - 2 * L * S), (1 / L))) / 2;
             }
@@ -90,20 +112,20 @@ namespace AnthStat.Statistics
                 stddev = M * (Math.Pow((1 + (2 * L * S)), (1 / L)) - 1) / 2;
             }
 
-            flag = (rawValue - M) / stddev;
+            flag = (measurement - M) / stddev;
 
-            return Z;
+            return flag;
         }
         
         /// <summary>
-        /// Gets the percentile for a given z-score
+        /// Calculates the percentile for a given z-score
         /// </summary>
         /// <param name="z">The z-score to get a percentile for</param>
         /// <remarks>
         ///     Algorithm AS66 Applied Statistics (1973) vol22 no.3 - Computes P(Z < z). When z=1.96, the values returned are .975 (upper=false) or .025(upper=true) (roughly). 
         /// </remarks>
         /// <returns>double; the percentile that corresponds to the z-score</return>
-        public static double GetPercentile(double z)
+        public static double CalculatePercentile(double z)
         {
             double y = 0;
             double alnorm = 0;
@@ -165,18 +187,36 @@ namespace AnthStat.Statistics
             return alnorm * 100;
         } 
 
+        /// <summary>
+        /// Interpolates the L, M, and S values for a given measurement using the closest neighbors to that measurement. For
+        /// example, if the lookup table has LMS entries for 24.0 and 25.0, and the measurement provided is 24.2, then the
+        /// lower LMS values will be multiplied by 0.8 and added to the upper LMS values, which will be multiplied by 0.2.
+        /// The interpolated LMS values are then returned in a 3-tuple.
+        /// </summary>
+        /// <param name="measurement">The measurement in metric units</param>
+        /// <param name="sex">Whether the child is male or female</param>
+        /// <param name="reference">The lookup table to use to find the closest neighbors to the measurement value</param>
+        /// <param name="mode">Whether the interpolation algorithm checks closest neighbors at intervals of 1.0 or 0.1.</param>
+        /// <returns>3-tuple of double representing the interpolated L, M, and S values</return>
         internal static Tuple<double, double, double> InterpolateLMS(double measurement, Sex sex, List<Lookup> reference, InterpolationMode mode = InterpolationMode.Ones)
         {
-            double measurementLower = (int)measurement;
+            double measurementLower = (double)(int)measurement;
             double measurementUpper = measurementLower + 1.0;
 
             if (mode == InterpolationMode.Tenths)
             {
-                measurementLower = (int)(measurement * 10);
-                measurementLower = measurementLower / 10;
+                double rounded = Math.Round(measurement, 1);
 
-                measurementUpper = (int)((measurementLower + 0.1) * 10);
-                measurementUpper = measurementUpper / 10;
+                if (rounded > measurement)
+                {
+                    measurementUpper = rounded;
+                    measurementLower = Math.Round(measurementUpper - 0.1, 1);
+                }
+                else 
+                {
+                    measurementLower = rounded;
+                    measurementUpper = Math.Round(measurementLower + 0.1, 1);
+                }
             }
 
             var lookupLowerRef = new Lookup(sex, measurementLower, 0, 0, 0);
@@ -191,7 +231,7 @@ namespace AnthStat.Statistics
                 var lowerLookup = reference[indexLower];
                 var upperLookup = reference[indexUpper];
 
-                double lowerModifier = Math.Round((measurementUpper - measurement), 4);
+                double lowerModifier = Math.Round((measurementUpper - measurement), 5);
 
                 if (mode == InterpolationMode.Tenths)
                 {
@@ -208,7 +248,7 @@ namespace AnthStat.Statistics
             }
             else 
             {
-                throw new InvalidOperationException("Value out of range");
+                throw new InvalidOperationException($"Value {Math.Round(measurement, 6).ToString("N2")} out of range in InterpolateLMS()");
             }
         }
     }

@@ -1,5 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+
+[assembly: InternalsVisibleTo("AnthStat.Statistics.Tests")]
 
 namespace AnthStat.Statistics
 {
@@ -23,7 +26,7 @@ namespace AnthStat.Statistics
                 case Indicator.BMIForAge:
                 case Indicator.WeightForAge:
                 case Indicator.HeightForAge:
-                case Indicator.HCForAge:
+                case Indicator.HeadCircumferenceForAge:
                 case Indicator.LengthForAge:
                 case Indicator.WeightForHeight:
                 case Indicator.WeightForLength:
@@ -55,7 +58,7 @@ namespace AnthStat.Statistics
                     cutoffLower = 24;
                     cutoffUpper = 240.5;
                     break;
-                case Indicator.HCForAge:
+                case Indicator.HeadCircumferenceForAge:
                     cutoffLower = 0;
                     cutoffUpper = 36;
                     break;
@@ -96,19 +99,19 @@ namespace AnthStat.Statistics
         /// measurement value, and gender. A return value indicates whether the computation succeeded or failed.
         /// </summary>
         /// <param name="indicator">The indicator to use for computing the z-score (e.g. BMI, Height-for-Age, Weight-for-Age, etc.)</param>
-        /// <param name="measurement1">The first measurement; typically age of the child in months. If not age, must be in metric units.</param>
-        /// <param name="measurement2">The second measurement value. Must be in metric units.</param>
+        /// <param name="measurement1">The first measurement; typically age of the child in months. If not age, must be in metric units and greater than or equal to zero.</param>
+        /// <param name="measurement2">The second measurement value. Must be in metric units and must be greater than or equal to zero.</param>
         /// <param name="sex">Whether the child is male or female</param>
         /// <param name="z">The computed z-score for the given set of inputs</param>
         /// <returns>bool; whether the computation succeeded or failed</return>
-        public bool TryComputeZScore(Indicator indicator, double measurement1, double measurement2, Sex sex, ref double z)
+        public bool TryCalculateZScore(Indicator indicator, double measurement1, double measurement2, Sex sex, ref double z)
         {
             bool success = false;
-            if (IsValidMeasurement(indicator, measurement1))
+            if (IsValidMeasurement(indicator, measurement1) && measurement2 >= 0)
             {
                 try 
                 {
-                    z = ComputeZScore(indicator, measurement1, measurement2, sex);
+                    z = CalculateZScore(indicator, measurement1, measurement2, sex);
                     success = true;
                 }
                 catch (Exception)
@@ -122,25 +125,31 @@ namespace AnthStat.Statistics
         /// Gets a z-score for the given indicator, age in months, measurement value, and gender.
         /// </summary>
         /// <param name="indicator">The indicator to use for computing the z-score (e.g. BMI, Height-for-Age, Weight-for-Age, etc.)</param>
-        /// <param name="measurement1">The first measurement; typically age of the child in months. If not age, must be in metric units.</param>
+        /// <param name="measurement1">The first measurement; typically age of the child in months. If not age, must be in metric units. Automatically rounded to 5 decimal values.</param>
         /// <param name="measurement2">The second measurement value. Must be in metric units.</param>
         /// <param name="sex">Whether the child is male or female</param>
         /// <returns>double; the z-score for the given inputs</return>
-        public double ComputeZScore(Indicator indicator, double measurement1, double measurement2, Sex sex)
+        public double CalculateZScore(Indicator indicator, double measurement1, double measurement2, Sex sex)
         {
+            if (measurement2 < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(measurement2));
+            }
             if (!IsValidMeasurement(indicator, measurement1))
             {
                 throw new ArgumentOutOfRangeException(nameof(measurement1));
             }
 
-            IDictionary<string, Lookup> reference = null;
+            measurement1 = Math.Round(measurement1, 5);
+
+            IDictionary<int, Lookup> reference = null;
 
             switch (indicator)
             {
                 case Indicator.BMIForAge:
                     reference = CDC2000_BMI;
                     break;
-                case Indicator.HCForAge:
+                case Indicator.HeadCircumferenceForAge:
                     reference = CDC2000_HeadCircumference;
                     break;
                 case Indicator.LengthForAge:
@@ -162,32 +171,59 @@ namespace AnthStat.Statistics
                     throw new ArgumentOutOfRangeException(nameof(indicator));
             }
 
-            var flag = 0.0;
-
-            string key = BuildKey(sex, measurement1);
-
+            int key = BuildKey(sex, measurement1);
             Lookup lookup = null;
-
             bool found = reference.TryGetValue(key, out lookup);
 
             if (found)
             {
-                return StatHelper.GetZ(measurement2, lookup.L, lookup.M, lookup.S, ref flag, false);
+                return StatHelper.CalculateZScore(measurement2, lookup.L, lookup.M, lookup.S, false);
             }            
             else 
             {
                 var interpolatedValues = InterpolateLMS(sex, measurement1, reference);
-                return StatHelper.GetZ(measurement2, interpolatedValues.Item1, interpolatedValues.Item2, interpolatedValues.Item3, ref flag, false);
+                return StatHelper.CalculateZScore(measurement2, interpolatedValues.Item1, interpolatedValues.Item2, interpolatedValues.Item3, false);
             }
         }
 
-        private string BuildKey(Sex sex, double measurement)
+        /// <summary>
+        /// Builds a dictionary key using a provided sex and measurement value.
+        /// </summary>
+        /// <param name="measurement">The measurement in metric units</param>
+        /// <param name="sex">Whether the child is male or female</param>
+        /// <returns>int; represents the integer dictionary key for the given sex and measurement values</returns>
+        internal int BuildKey(Sex sex, double measurement)
         {
-            string sexStr = sex == Sex.Male ? "Male" : "Female";
-            return sexStr + "-" + measurement.ToString();
+            if (StatHelper.IsWholeNumber(measurement) || measurement % 0.5 == 0.0)
+            {
+                int sexKeyPart = sex == Sex.Male ? 1 : 2;
+                int measurementKeyPart = (int)(measurement * 100) + sexKeyPart;
+                return measurementKeyPart;
+            }
+            
+            return -1;
         }
 
-        private Tuple<double, double, double> InterpolateLMS(Sex sex, double measurement, IDictionary<string, Lookup> reference)
+        /// <summary>
+        /// Interpolates the L, M, and S values for a given measurement using the closest neighbors to that measurement. For
+        /// example, if the lookup table has LMS entries for 24.5 and 25.5, and the measurement provided is 24.7, then the
+        /// lower LMS values will be multiplied by 0.8 and added to the upper LMS values, which will be multiplied by 0.2.
+        /// The interpolated LMS values are then returned in a 3-tuple.
+        /// </summary>        
+        /// <remarks>
+        ///     The CDC 2000 Growth Chart data points are mostly spaced at 1.0 intervals, e.g. 24.5 to 25.5 to 26.5, etc.
+        ///     However, a small handful of points are spaced 0.5 apart such as the BMI-for-age data values at 24.0 and
+        ///     24.5. Some extra logic is included to find the proper neighbor in this case (since one cannot assume that
+        ///     the neighbors will always be +/- 1 away) and then to adjust the modifiers applied to the upper and lower
+        ///     LMS values. This means a 24.1 measurement for age will see the lower LMS values multiplied by 0.8, since
+        ///     0.1 is 20% of the distance to 0.5. If the measurement were instead 25.1, then the lower LMS values would
+        ///     be multiplied by 0.1 since 0.1 is 10% of the distance to 1.0.
+        /// </remarks>
+        /// <param name="sex">Whether the child is male or female</param>
+        /// <param name="measurement">The measurement in metric units</param>
+        /// <param name="reference">The lookup table to use to find the closest neighbors to the measurement value</param>
+        /// <returns>3-tuple of double representing the interpolated L, M, and S values</return>
+        internal Tuple<double, double, double> InterpolateLMS(Sex sex, double measurement, IDictionary<int, Lookup> reference)
         {
             double rounded = Math.Round(measurement);
 
@@ -197,7 +233,7 @@ namespace AnthStat.Statistics
             Lookup lookupUpper = null;
             Lookup lookupLower = null;
 
-            string initialKeyAttempt = BuildKey(sex, rounded);
+            int initialKeyAttempt = BuildKey(sex, rounded);
 
             if (reference.ContainsKey(initialKeyAttempt))
             {
@@ -213,11 +249,19 @@ namespace AnthStat.Statistics
                 }
             }
 
-            if (nextUpper == -1) nextUpper = Math.Round(measurement, 0) + 0.5;
-            if (nextLower == -1) nextLower = Math.Round(measurement, 0) - 0.5;
+            var keyUpper = -1;
+            var keyLower = -1;
 
-            var keyUpper = BuildKey(sex, nextUpper);
-            var keyLower = BuildKey(sex, nextLower);
+            if (nextUpper == -1) 
+            {
+                nextUpper = Math.Round(measurement, 0) + 0.5;
+                keyUpper = BuildKey(sex, nextUpper);
+            }
+            if (nextLower == -1) 
+            {
+                nextLower = Math.Round(measurement, 0) - 0.5;
+                keyLower = BuildKey(sex, nextLower);
+            }
 
             if (reference.ContainsKey(keyUpper)) 
             {
@@ -264,7 +308,7 @@ namespace AnthStat.Statistics
             double diff = lookupUpper.Measurement - lookupLower.Measurement;
             double globalModifier = 100 / (100 * diff);
 
-            double lowerModifier = Math.Round((lookupUpper.Measurement - measurement), 4);
+            double lowerModifier = Math.Round((lookupUpper.Measurement - measurement), 5);
             double upperModifier = (diff - lowerModifier);
 
             lowerModifier *= globalModifier;

@@ -23,11 +23,11 @@ namespace AnthStat.Statistics
                 case Indicator.BMIForAge:
                 case Indicator.WeightForAge:
                 case Indicator.HeightForAge:
-                case Indicator.ACForAge:
-                case Indicator.HCForAge:
+                case Indicator.ArmCircumferenceForAge:
+                case Indicator.HeadCircumferenceForAge:
                 case Indicator.LengthForAge:
-                case Indicator.SSFForAge:
-                case Indicator.TSFForAge:
+                case Indicator.SubscapularSkinfoldForAge:
+                case Indicator.TricepsSkinfoldForAge:
                 case Indicator.WeightForHeight:
                 case Indicator.WeightForLength:
                     return true;
@@ -54,9 +54,9 @@ namespace AnthStat.Statistics
 
             switch (indicator)
             {
-                case Indicator.SSFForAge:
-                case Indicator.TSFForAge:
-                case Indicator.ACForAge:
+                case Indicator.SubscapularSkinfoldForAge:
+                case Indicator.TricepsSkinfoldForAge:
+                case Indicator.ArmCircumferenceForAge:
                     cutoffLower = 91;
                     break;
                 case Indicator.WeightForHeight:
@@ -84,19 +84,19 @@ namespace AnthStat.Statistics
         /// measurement value, and gender. A return value indicates whether the computation succeeded or failed.
         /// </summary>
         /// <param name="indicator">The indicator to use for computing the z-score (e.g. BMI, Height-for-Age, Weight-for-Age, etc.)</param>
-        /// <param name="measurement1">The first measurement; typically age of the child in days. Must be in metric units.</param>
-        /// <param name="measurement2">The second measurement value. Must be in metric units.</param>
+        /// <param name="measurement1">The first measurement; typically age of the child in days. Must be in metric units and greater than or equal to zero.</param>
+        /// <param name="measurement2">The second measurement value. Must be in metric units and must be greater than or equal to zero.</param>
         /// <param name="sex">Whether the child is male or female</param>
         /// <param name="z">The computed z-score for the given set of inputs</param>
         /// <returns>bool; whether the computation succeeded or failed</return>
-        public bool TryComputeZScore(Indicator indicator, double measurement1, double measurement2, Sex sex, ref double z)
+        public bool TryCalculateZScore(Indicator indicator, double measurement1, double measurement2, Sex sex, ref double z)
         {
             bool success = false;
-            if (IsValidMeasurement(indicator, measurement1))
+            if (IsValidMeasurement(indicator, measurement1) && measurement2 >= 0)
             {
                 try 
                 {
-                    z = ComputeZScore(indicator, measurement1, measurement2, sex);
+                    z = CalculateZScore(indicator, measurement1, measurement2, sex);
                     success = true;
                 }
                 catch (Exception)
@@ -110,16 +110,22 @@ namespace AnthStat.Statistics
         /// Gets a z-score for the given indicator, age in months, measurement value, and gender.
         /// </summary>
         /// <param name="indicator">The indicator to use for computing the z-score (e.g. BMI, Height-for-Age, Weight-for-Age, etc.)</param>
-        /// <param name="measurement1">The first measurement; typically age of the child in days. Must be in metric units.</param>
+        /// <param name="measurement1">The first measurement; typically age of the child in days. Must be in metric units. Automatically rounded to 5 decimal values.</param>
         /// <param name="measurement2">The second measurement value. Must be in metric units.</param>
         /// <param name="sex">Whether the child is male or female</param>
         /// <returns>double; the z-score for the given inputs</return>
-        public double ComputeZScore(Indicator indicator, double measurement1, double measurement2, Sex sex)
+        public double CalculateZScore(Indicator indicator, double measurement1, double measurement2, Sex sex)
         {
+            if (measurement2 < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(measurement2));
+            }
             if (!IsValidMeasurement(indicator, measurement1))
             {
                 throw new ArgumentOutOfRangeException(nameof(measurement1));
             }
+
+            measurement1 = Math.Round(measurement1, 5);
             
             List<Lookup> reference = null;
             bool shouldRound = true;
@@ -140,20 +146,20 @@ namespace AnthStat.Statistics
                 case Indicator.WeightForAge:
                     reference = WHO2006_WeightForAge;
                     break;
-                case Indicator.ACForAge:
+                case Indicator.ArmCircumferenceForAge:
                     reference = WHO2006_ArmCircumference;
                     break;
-                case Indicator.HCForAge:
+                case Indicator.HeadCircumferenceForAge:
                     reference = WHO2006_HeadCircumference;
                     break;
                 case Indicator.HeightForAge:
                 case Indicator.LengthForAge:
                     reference = WHO2006_LengthHeightForAge;
                     break;
-                case Indicator.SSFForAge:
+                case Indicator.SubscapularSkinfoldForAge:
                     reference = WHO2006_SubscapularSkinfoldForAge;
                     break;
-                case Indicator.TSFForAge:
+                case Indicator.TricepsSkinfoldForAge:
                     reference = WHO2006_TricepsSkinfoldForAge;
                     break;
                 default:
@@ -167,25 +173,24 @@ namespace AnthStat.Statistics
 
             var lookupRef = new Lookup(sex, measurement1, 0, 0, 0);
             int index = reference.BinarySearch(lookupRef, new LookupComparer());
-            double flag = 0;
-            
+
             if (index >= 0)
             {
                 // found it
                 var lookup = reference[index];
-                return StatHelper.GetZ(measurement2, lookup.L, lookup.M, lookup.S, ref flag, true);
+                return StatHelper.CalculateZScore(measurement2, lookup.L, lookup.M, lookup.S, true);
             }
-            else if (index == -1 && (indicator == Indicator.WeightForLength || indicator == Indicator.WeightForHeight))
+            else if (index <= -1 && (indicator == Indicator.WeightForLength || indicator == Indicator.WeightForHeight))
             {
                 // Only Weight-for-Length and Height have decimal values in the lookup table, so interpolate here if needed. The other
                 // indicators are age-based and go day-by-day, so it is not worth interpolating between days and we'll just use whole
                 // numbers there.
-                var interpolatedLMS = StatHelper.InterpolateLMS(measurement2, sex, reference, InterpolationMode.Tenths);
-                return StatHelper.GetZ(measurement2, interpolatedLMS.Item1, interpolatedLMS.Item2, interpolatedLMS.Item3, ref flag, true);
+                var interpolatedLMS = StatHelper.InterpolateLMS(measurement1, sex, reference, InterpolationMode.Tenths);
+                return StatHelper.CalculateZScore(measurement2, interpolatedLMS.Item1, interpolatedLMS.Item2, interpolatedLMS.Item3, true);
             }
             else 
             {
-                throw new InvalidOperationException("Value out of range");
+                throw new InvalidOperationException($"Could not find a lookup match for value {Math.Round(measurement1, 2).ToString("N2")}");
             }
         }
     }

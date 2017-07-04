@@ -8,9 +8,9 @@
         WeightForLength,
         WeightForHeight,
         BMIForAge,
-        HCForAge,
-        ACForAge,
-        SSFForAge,
-        TSFForAge
+        HeadCircumferenceForAge,
+        ArmCircumferenceForAge,
+        SubscapularSkinfoldForAge,
+        TricepsSkinfoldForAge        
     }
 }

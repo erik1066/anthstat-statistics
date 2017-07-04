@@ -1,9 +1,8 @@
+Latest version: [NuGet Package](https://www.nuget.org/packages/AnthStat.Statistics/2.0.0) (4 July 2017)
+
 # Description
 
-Latest version: 1.1.1
-Released: 7/1/2017
-
-AnthStat computes z-scores for children and adolescents using the WHO 2006 Child Growth Standards, the WHO 2007 Growth Reference, and the CDC 2000 Growth Charts. Z-scores can be used to determine if a child is growing appropriately and to predict their expected adult height and weight.
+AnthStat computes z-scores for children and adolescents using the WHO 2006 Child Growth Standards, the WHO 2007 Growth Reference, and the CDC 2000 Growth Charts. Z-scores can be used to determine if a child is growing appropriately and to predict their expected adult height and weight. 
 
 Z-scores for the following indicators can be computed using the WHO 2006 Growth Standard:
 
@@ -38,7 +37,9 @@ For more information and further documentation:
 
 # Usage
 
-Let's assume one wishes to compute a z-score for a 64 month-old male who has a body mass index (BMI) of 17 using the WHO 2007 Growth Reference:
+Be sure to first read and agree to the [license](LICENSE.txt) and then include the latest [NuGet Package](https://www.nuget.org/packages/AnthStat.Statistics/).
+
+To compute a z-score and percentile for a 64 month-old male who has a body mass index (BMI) of 17 using the WHO 2007 Growth Reference:
 
 ``` cs
 var who2007 = new AnthStat.Statistics.WHO2007();
@@ -46,13 +47,8 @@ var who2007 = new AnthStat.Statistics.WHO2007();
 double bmi = 17.0;
 double ageMonths = 64;
 
-double z = who2007.ComputeZScore(Indicator.BMIForAge, ageMonths, bmi, Sex.Male);
-```
-
-To get a percentile from the z-score:
-
-``` cs
-p = StatHelper.GetPercentile(z);
+double z = who2007.CalculateZScore(Indicator.BMIForAge, ageMonths, bmi, Sex.Male);
+double p = StatHelper.CalculatePercentile(z);
 ```
 
 Their z-score is 1.22 which equates to a percentile of 88.90.
@@ -65,7 +61,7 @@ var who2006 = new AnthStat.Statistics.WHO2006();
 double bmi = 16.0;
 double ageDays = 32;
 
-double z = who2006.ComputeZScore(Indicator.BMIForAge, ageDays, bmi, Sex.Female);
+double z = who2006.CalculateZScore(Indicator.BMIForAge, ageDays, bmi, Sex.Female);
 ```
 
 To use the CDC 2000 Growth Charts to compute a z-score for a 24-month old female with a BMI of 15.25:
@@ -76,7 +72,7 @@ var cdc2000 = new AnthStat.Statistics.CDC2000();
 double bmi = 15.25;
 double ageMonths = 24;
 
-double z = cdc2000.ComputeZScore(Indicator.BMIForAge, ageMonths, bmi, Sex.Female);
+double z = cdc2000.CalculateZScore(Indicator.BMIForAge, ageMonths, bmi, Sex.Female);
 ```
 
 Some inputs are undefined per the WHO and CDC specifications. For example, the WHO 2007 Growth Reference defines ages between 61 and 228 months for the BMI-for-Age indicator. Attempting to use an age value outside of this range will result in an ```ArgumentOutOfRangeException```. Callers can avoid exceptions by asking ahead of time for a validation check:
@@ -87,9 +83,36 @@ bool isValid = cdc2000.IsValidMeasurement(Indicator.LengthForAge, ageMonths);
 
 if (isValid)
 {
-    double z = cdc2000.ComputeZScore(Indicator.LengthForAge, ageMonths, length, Sex.Female);
+    double z = cdc2000.CalculateZScore(Indicator.LengthForAge, ageMonths, length, Sex.Female);
 }
 ```
+
+Version 2.0 of the API makes the validation check easier by implementing a ```TryCalculateZScore``` method:
+
+``` cs
+double z = 0.0;
+if (cdc2000.TryCalculateZScore(Indicator.WeightForAge, 48, weight, Sex.Male, ref z))
+{
+    z = Math.Round(z, 2);
+    Console.WriteLine($"Weight-for-age z-score for a 48-month old male weighing {weight.ToString("N2")} kg : {z.ToString("N2")} ");
+}
+else
+{
+    Console.WriteLine($"Weight-for-age z-score could not be calculated - inputs out of range.");
+}
+```
+
+# Versioning
+
+AnthStat.Statistics follows [semantic versioning](http://semver.org/) guidelines. The major points to remember about semantic versioning are:
+
+> Given a version number MAJOR.MINOR.PATCH, increment the:
+> 
+> MAJOR version when you make incompatible API changes,
+> MINOR version when you add functionality in a backwards-compatible manner, and
+> PATCH version when you make backwards-compatible bug fixes.
+
+This implies version 2.x of the AnthStat.Statistics API is not backwards-compatible with version 1.x.
 
 # Important Notes
 
@@ -117,9 +140,9 @@ CDC's Epi Info 7.2.1 for Windows Desktop software suite (see https://www.cdc.gov
 
 There are over 200 unit tests that check the software's computed z-scores against a set of hand-computed (using a calculator tool) z-scores for the same set of input measurements. The hand-computed z-scores relied on the WHO or CDC growth data files to obtain their L, M, and S values. The hand-computing process used L, M, and S values from the CDC and WHO websites, not from the software's source code; this was done in case the transformation from text files to C# was done incorrectly. Both interpolated and non-interpolated z-scores are checked under various conditions. Every indicator for each of the three growth data sets (WHO 2006, WHO 2007, and CDC 2000) are checked extensively. 
 
-The WHO Anthro software was used a second source of truth when deriving the expected z-score outputs for unit tests targeting the WHO 2006 Growth Standards. These supplemented the hand-computed expected z-score outputs.
+The WHO Anthro software was used as a second source of truth when deriving the expected z-score outputs for the WHO 2006 Growth Standards.
 
-Performance testing shows that AnthStat.Statistics can compute 1,000,000 z-scores from the WHO 2006 Growth Standards in about 900 milliseconds on a modern desktop CPU.
+Performance testing shows that AnthStat.Statistics computes 1,000,000 z-scores from the CDC 2000 Growth Charts in about 450 milliseconds (interpolated) or 170 milliseconds (non-interpolated) on a modern desktop CPU using a single thread and the .NET Core runtime. Using .NET's Task Parallel Library and a ```Parallel.ForEach```, a quad-core desktop processor with hyperthreading sees a 4x performance boost when calculating z-scores for the same set of 1,000,000 records. An example of how to use a ```Parallel.ForEach``` loop to process z-scores can be found in the samples folder.
 
 # References
 

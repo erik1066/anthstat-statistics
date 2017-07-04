@@ -26,10 +26,10 @@ namespace AnthStat.Statistics.Tests
         }
 
         [Theory]
-        [InlineData(Sex.Male, 50, 101, 1, 1)]
+        [InlineData(Sex.Male, 50, 131, 1, 1)]
         [InlineData(Sex.Male, 50, 1, 201, 1)]
         [InlineData(Sex.Male, 50, 1, 1, 101)]
-        [InlineData(Sex.Male, 50, -101, 1, 1)]
+        [InlineData(Sex.Male, 50, -131, 1, 1)]
         [InlineData(Sex.Male, 50, 1, -201, 1)]
         [InlineData(Sex.Male, 50, 1, 1, -101)]
         [InlineData(Sex.Male, -1, 1, 1, 1)]

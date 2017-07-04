@@ -40,7 +40,7 @@ namespace AnthStat.Statistics
         /// Gets the S value, also known as the generalized coefficient of variation. Must be non-zero.
         /// </summary>
         public double S { get; }
-        
+
         /// <summary>
         /// Constructor
         /// </summary>
@@ -56,7 +56,7 @@ namespace AnthStat.Statistics
             {
                 throw new ArgumentOutOfRangeException(nameof(measurement));
             }
-            if (Math.Abs(l) > 100)
+            if (Math.Abs(l) > 130)
             {
                 throw new ArgumentOutOfRangeException(nameof(l));
             }

@@ -1,5 +1,6 @@
 ﻿using System;
 using AnthStat.Statistics;
+using System.Threading.Tasks;
 
 namespace samples
 {
@@ -9,7 +10,10 @@ namespace samples
         {
             // This is how you check to see if inputs are out-of-range before calling the method that computes the z-score
             double ageMonths = 17; 
-            bool isValid = CheckMeasurementValidityCDC2000(ageMonths, Indicator.BMIForAge);
+            
+            var cdc2000 = new AnthStat.Statistics.CDC2000();
+            bool isValid = cdc2000.IsValidMeasurement(Indicator.BMIForAge, ageMonths);            
+
             if (!isValid)
             {
                 Console.WriteLine($"{ageMonths} is not a valid age in months for the CDC 2000 BMI-for-age indicator.");
@@ -20,6 +24,24 @@ namespace samples
             }
 
             Console.WriteLine();
+
+            // Alternatively, you can use the TryCalculateZScore method to the same as the above, though this also calculates
+            // the z-score if the check is successful:
+
+            ageMonths = 26; 
+            double z = 0.0;
+            double bmi = 18.0;
+            if (cdc2000.TryCalculateZScore(Indicator.BMIForAge, ageMonths, bmi, Sex.Female, ref z))
+            {
+                double p = StatHelper.CalculatePercentile(z);
+                z = Math.Round(z, 2);
+                p = Math.Round(p, 2);
+                Console.WriteLine($"[CDC 2000] - {ageMonths} month old female with BMI = {bmi} has z-score of {z.ToString("N2")} and percentile of {p.ToString("N2")}");                
+            }
+            else
+            {
+                Console.WriteLine($"{ageMonths} is a valid age in months for the CDC 2000 BMI-for-age indicator.");
+            }
 
             // Look at these methods for examples of how to generate z-scores and percentiles for a given set of inputs
             GetBodyMassIndexCDC2000();
@@ -38,13 +60,6 @@ namespace samples
             TestWHO2007ComputeSpeed(false); // forces test to never use interpolation
         }
 
-        private static bool CheckMeasurementValidityCDC2000(double ageMonths, Indicator indicator)
-        {
-            var cdc2000 = new AnthStat.Statistics.CDC2000();
-            bool isValid = cdc2000.IsValidMeasurement(indicator, ageMonths);
-            return isValid;
-        }
-
         private static void GetBodyMassIndexCDC2000()
         {
             var cdc2000 = new AnthStat.Statistics.CDC2000();
@@ -52,8 +67,8 @@ namespace samples
             double bmi = 16.0;
             double ageMonths = 32;
 
-            double z = cdc2000.ComputeZScore(Indicator.BMIForAge, ageMonths, bmi, Sex.Female);
-            double p = StatHelper.GetPercentile(z);
+            double z = cdc2000.CalculateZScore(Indicator.BMIForAge, ageMonths, bmi, Sex.Female);
+            double p = StatHelper.CalculatePercentile(z);
 
             z = Math.Round(z, 2);
             p = Math.Round(p, 2);
@@ -68,8 +83,8 @@ namespace samples
             double bmi = 16.0;
             double ageDays = 32;
 
-            double z = who2006.ComputeZScore(Indicator.BMIForAge, ageDays, bmi, Sex.Female);
-            double p = StatHelper.GetPercentile(z);
+            double z = who2006.CalculateZScore(Indicator.BMIForAge, ageDays, bmi, Sex.Female);
+            double p = StatHelper.CalculatePercentile(z);
 
             z = Math.Round(z, 2);
             p = Math.Round(p, 2);
@@ -84,8 +99,8 @@ namespace samples
             double bmi = 17.0;
             double ageMonths = 64;
 
-            double z = who2007.ComputeZScore(Indicator.BMIForAge, ageMonths, bmi, Sex.Male);
-            double p = StatHelper.GetPercentile(z);
+            double z = who2007.CalculateZScore(Indicator.BMIForAge, ageMonths, bmi, Sex.Male);
+            double p = StatHelper.CalculatePercentile(z);
 
             z = Math.Round(z, 2);
             p = Math.Round(p, 2);
@@ -122,7 +137,7 @@ namespace samples
 
             for (int i = 0; i < loopIterations; i++)
             {                
-                who2007.ComputeZScore(Indicator.BMIForAge, ageMonths[i], bmis[i], sexes[i]);
+                who2007.CalculateZScore(Indicator.BMIForAge, ageMonths[i], bmis[i], sexes[i]);
             }
 
             sw.Stop();
@@ -154,7 +169,7 @@ namespace samples
 
             for (int i = 0; i < loopIterations; i++)
             {                
-                who2006.ComputeZScore(Indicator.BMIForAge, ageDays[i], bmis[i], sexes[i]);
+                who2006.CalculateZScore(Indicator.BMIForAge, ageDays[i], bmis[i], sexes[i]);
             }
 
             sw.Stop();
@@ -170,13 +185,14 @@ namespace samples
 
             var rnd = new System.Random();
             int loopIterations = 1_000_000;
-
+            int [] index = new int[loopIterations];
             double [] ageDays = new double[loopIterations];
             double [] bmis = new double[loopIterations];
             Sex [] sexes = new Sex[loopIterations];
 
             for (int i = 0; i < loopIterations; i++)
             {
+                index[i] = i;
                 ageDays[i] = rnd.Next(24, 240);
 
                 if (!forceInterpolate)
@@ -186,18 +202,29 @@ namespace samples
 
                 bmis[i] = rnd.NextDouble() * 25;
                 sexes[i] = ageDays[i] % 2 == 0 ? Sex.Female : Sex.Male;
-            }
+            }            
 
             sw.Start();
 
             for (int i = 0; i < loopIterations; i++)
             {                
-                cdc2000.ComputeZScore(Indicator.BMIForAge, ageDays[i], bmis[i], sexes[i]);
+                cdc2000.CalculateZScore(Indicator.BMIForAge, ageDays[i], bmis[i], sexes[i]);
             }
 
             sw.Stop();
 
-            Console.WriteLine($"Computed {loopIterations} CDC 2000 z-scores in {sw.Elapsed.TotalMilliseconds.ToString("N0")} milliseconds [interpolate = {forceInterpolate}]");
+            Console.WriteLine($"Computed {loopIterations} CDC 2000 z-scores in {sw.Elapsed.TotalMilliseconds.ToString("N0")} milliseconds [SERIAL] [interpolate = {forceInterpolate}]");
+
+            // Shows how one might batch-process z-scores across several threads using .NET's task parallel library
+            sw.Reset();
+            sw.Start();
+            Parallel.ForEach(index, (i) =>
+            {
+                cdc2000.CalculateZScore(Indicator.BMIForAge, ageDays[i], bmis[i], sexes[i]);
+            });
+            sw.Stop();
+
+            Console.WriteLine($"Computed {loopIterations} CDC 2000 z-scores in {sw.Elapsed.TotalMilliseconds.ToString("N0")} milliseconds [PARALLEL] [interpolate = {forceInterpolate}]");
         }
     }
 }

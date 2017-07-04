@@ -1,5 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+
+[assembly: InternalsVisibleTo("AnthStat.Statistics.Tests")]
 
 namespace AnthStat.Statistics
 {
@@ -72,14 +75,14 @@ namespace AnthStat.Statistics
         /// <param name="sex">Whether the child is male or female</param>
         /// <param name="z">The computed z-score for the given set of inputs</param>
         /// <returns>bool; whether the computation succeeded or failed</return>
-        public bool TryComputeZScore(Indicator indicator, double age, double measurement, Sex sex, ref double z)
+        public bool TryCalculateZScore(Indicator indicator, double age, double measurement, Sex sex, ref double z)
         {
             bool success = false;
-            if (IsValidMeasurement(indicator, age))
+            if (IsValidMeasurement(indicator, age) && measurement >= 0)
             {
                 try 
                 {
-                    z = ComputeZScore(indicator, age, measurement, sex);
+                    z = CalculateZScore(indicator, age, measurement, sex);
                     success = true;
                 }
                 catch (Exception)
@@ -90,21 +93,45 @@ namespace AnthStat.Statistics
         }
 
         /// <summary>
+        /// Builds a dictionary key using a provided sex and measurement value.
+        /// </summary>
+        /// <param name="measurement">The measurement in metric units</param>
+        /// <param name="sex">Whether the child is male or female</param>
+        /// <returns>int; represents the integer dictionary key for the given sex and measurement values</returns>
+        internal int BuildKey(Sex sex, double measurement)
+        {
+            if (StatHelper.IsWholeNumber(measurement) || measurement % 0.5 == 0.0)
+            {
+                int sexKeyPart = sex == Sex.Male ? 1 : 2;
+                int measurementKeyPart = (int)(measurement * 100) + sexKeyPart;
+                return measurementKeyPart;
+            }
+            
+            return -1;
+        }
+
+        /// <summary>
         /// Gets a z-score for the given indicator, age in months, measurement value, and gender.
         /// </summary>
         /// <param name="indicator">The indicator to use for computing the z-score (e.g. BMI, Height-for-Age, Weight-for-Age)</param>
-        /// <param name="age">The age of the child in months</param>
-        /// <param name="measurement">The raw measurement value in metric units</param>
+        /// <param name="age">The age of the child in months. Must be greater than or equal to zero. Automatically rounded to 5 decimal values.</param>
+        /// <param name="measurement">The raw measurement value in metric units. Must be greater than or equal to zero.</param>
         /// <param name="sex">Whether the child is male or female</param>
         /// <returns>double; the z-score for the given inputs</return>
-        public double ComputeZScore(Indicator indicator, double age, double measurement, Sex sex)
+        public double CalculateZScore(Indicator indicator, double age, double measurement, Sex sex)
         {
+            if (measurement < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(measurement));
+            }
             if (!IsValidMeasurement(indicator, age))
             {
                 throw new ArgumentOutOfRangeException(nameof(age));
             }
 
-            List<Lookup> reference = null;
+            age = Math.Round(age, 5);
+
+            Dictionary<int, Lookup> reference = null;
 
             switch (indicator)
             {
@@ -121,30 +148,51 @@ namespace AnthStat.Statistics
                     throw new ArgumentOutOfRangeException(nameof(indicator));
             }
 
-            double flag = 0;
+            int key = BuildKey(sex, age);
+            Lookup lookup = null;
+            bool found = reference.TryGetValue(key, out lookup);
 
-            if (StatHelper.IsWholeNumber(age))
+            if (found)
             {
-                // If it's a whole number, then the value should be found in the list
-                var lookupRef = new Lookup(sex, age, 0, 0, 0);
-                int index = reference.BinarySearch(lookupRef);
-
-                if (index >= 0)
-                {
-                    // found it
-                    var lookup = reference[index];
-                    return StatHelper.GetZ(measurement, lookup.L, lookup.M, lookup.S, ref flag, true);
-                }
-                else 
-                {
-                    throw new InvalidOperationException("Value out of range");
-                }
-            }
+                return StatHelper.CalculateZScore(measurement, lookup.L, lookup.M, lookup.S, true);
+            }            
             else 
             {
-                var interpolatedLMS = StatHelper.InterpolateLMS(age, sex, reference);
-                return StatHelper.GetZ(measurement, interpolatedLMS.Item1, interpolatedLMS.Item2, interpolatedLMS.Item3, ref flag, true);
+                var interpolatedValues = InterpolateLMS(sex, age, reference);
+                return StatHelper.CalculateZScore(measurement, interpolatedValues.Item1, interpolatedValues.Item2, interpolatedValues.Item3, true);
             }
+        }
+
+        /// <summary>
+        /// Interpolates the L, M, and S values for a given measurement using the closest neighbors to that measurement. For
+        /// example, if the lookup table has LMS entries for 24.0 and 25.0, and the measurement provided is 24.2, then the
+        /// lower LMS values will be multiplied by 0.8 and added to the upper LMS values, which will be multiplied by 0.2.
+        /// The interpolated LMS values are then returned in a 3-tuple.
+        /// </summary>        
+        /// <param name="sex">Whether the child is male or female</param>
+        /// <param name="measurement">The measurement in metric units</param>
+        /// <param name="reference">The lookup table to use to find the closest neighbors to the measurement value</param>
+        /// <returns>3-tuple of double representing the interpolated L, M, and S values</return>
+        internal Tuple<double, double, double> InterpolateLMS(Sex sex, double ageMonths, IDictionary<int, Lookup> reference)
+        {
+            double ageLower = (double)(int)ageMonths;
+            double ageUpper = ageLower + 1.0;
+
+            var lookupLowerKey = BuildKey(sex, ageLower);
+            var lookupUpperKey = BuildKey(sex, ageUpper);
+            
+            var lookupLower = reference[lookupLowerKey];
+            var lookupUpper = reference[lookupUpperKey];      
+
+            double lowerModifier = Math.Round((ageUpper - ageMonths), 5);
+
+            double upperModifier = 1 - lowerModifier;
+
+            double L = ((lookupLower.L * lowerModifier) + (lookupUpper.L * upperModifier));
+            double M = ((lookupLower.M * lowerModifier) + (lookupUpper.M * upperModifier));
+            double S = ((lookupLower.S * lowerModifier) + (lookupUpper.S * upperModifier));
+
+            return new Tuple<double, double, double>(L, M, S);
         }
     }
 }
