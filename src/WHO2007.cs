@@ -10,20 +10,20 @@ namespace AnthStat.Statistics
     /// Class for computing z-scores using the WHO 2007 Growth Reference
     /// </summary>
     /// <remarks>
-    ///     See http://www.who.int/growthref/en/
+    /// See http://www.who.int/growthref/en/
     /// </remarks>
-    public partial class WHO2007
+    public sealed partial class WHO2007 : IGrowthReference
     {
         /// <summary>
         /// Determines whether the provided indicator is valid for the WHO 2007 Growth Reference
         /// </summary>
-        /// <param name="indicator">The indicator to check for validity within the growth reference</param>
-        /// <returns>bool; whether or not the provided indicator is valid for this reference</return>
+        /// <param name="indicator">The indicator to check for validity</param>
+        /// <returns>bool; whether or not the provided indicator is valid for the WHO 2007 Growth Reference</return>
         public bool IsValidIndicator(Indicator indicator)
         {
             switch (indicator)
             {
-                case Indicator.BMIForAge:
+                case Indicator.BodyMassIndexForAge:
                 case Indicator.WeightForAge:
                 case Indicator.HeightForAge:
                     return true;
@@ -33,11 +33,12 @@ namespace AnthStat.Statistics
         }
 
         /// <summary>
-        /// Determines whether a given pair of measurements (measurement1-for-measurement2, as in "BMI for Age") are valid for a given indicator
+        /// Determines whether the second measurement (in the form of measurement1-for-measurement2, as 
+        /// in "Height-for-Age") is valid for a given indicator.
         /// </summary>
         /// <param name="indicator">The indicator to which the measurements belong</param>
         /// <param name="age">The age of the child in months.</param>
-        /// <returns>bool; whether or not the provided measurements is valid for the given indicator. Also returns false if the indicator is invalid for the growth reference.</return>
+        /// <returns>bool; whether or not the provided measurements is valid for the given indicator. Also returns false if the indicator is invalid for the WHO 2007 Growth Reference.</return>
         public bool IsValidMeasurement(Indicator indicator, double age)
         {
             if (!IsValidIndicator(indicator)) 
@@ -66,23 +67,28 @@ namespace AnthStat.Statistics
         }
 
         /// <summary>
-        /// Computes a z-score for the given indicator, age in months, measurement value, and gender. A return 
-        /// value indicates whether the computation succeeded or failed.
+        /// Calculates a z-score for a given indicator, pair of measurements (measurement1-for-measurement2, as 
+        /// in "BMI-for-Age"), and gender. A return value indicates whether the computation succeeded or failed.
         /// </summary>
         /// <param name="indicator">The indicator to use for computing the z-score (e.g. BMI, Height-for-Age, Weight-for-Age)</param>
-        /// <param name="age">The age of the child in months</param>
-        /// <param name="measurement">The raw measurement value in metric units</param>
+        /// <param name="measurement">
+        /// The first measurement value. Must be in metric units and must be greater than or equal to zero. For 
+        /// example, if the indicator is 'Height-for-Age', then measurement represents the child's height in 
+        /// centimeters. If using 'Weight-for-Age', then the measurement represents the child's weight in
+        /// kilograms.
+        /// </param>
+        /// <param name="age">The age of the child in months. Must be greater than or equal to 61. Automatically rounded to 5 decimal values.</param>
         /// <param name="sex">Whether the child is male or female</param>
-        /// <param name="z">The computed z-score for the given set of inputs</param>
-        /// <returns>bool; whether the computation succeeded or failed</return>
-        public bool TryCalculateZScore(Indicator indicator, double age, double measurement, Sex sex, ref double z)
+        /// <param name="z">The z-score for the given set of inputs</param>
+        /// <returns>bool; whether the calculation succeeded or failed</return>
+        public bool TryCalculateZScore(Indicator indicator, double measurement, double age, Sex sex, ref double z)
         {
             bool success = false;
             if (IsValidMeasurement(indicator, age) && measurement >= 0)
             {
                 try 
                 {
-                    z = CalculateZScore(indicator, age, measurement, sex);
+                    z = CalculateZScore(indicator: indicator, measurement: measurement, age: age, sex: sex);
                     success = true;
                 }
                 catch (Exception)
@@ -93,32 +99,20 @@ namespace AnthStat.Statistics
         }
 
         /// <summary>
-        /// Builds a dictionary key using a provided sex and measurement value.
-        /// </summary>
-        /// <param name="measurement">The measurement in metric units</param>
-        /// <param name="sex">Whether the child is male or female</param>
-        /// <returns>int; represents the integer dictionary key for the given sex and measurement values</returns>
-        internal int BuildKey(Sex sex, double measurement)
-        {
-            if (StatHelper.IsWholeNumber(measurement) || measurement % 0.5 == 0.0)
-            {
-                int sexKeyPart = sex == Sex.Male ? 1 : 2;
-                int measurementKeyPart = (int)(measurement * 100) + sexKeyPart;
-                return measurementKeyPart;
-            }
-            
-            return -1;
-        }
-
-        /// <summary>
-        /// Gets a z-score for the given indicator, age in months, measurement value, and gender.
+        /// Calculates a z-score for a given indicator, pair of measurements (measurement1-for-measurement2, as 
+        /// in "BMI-for-Age"), and gender.
         /// </summary>
         /// <param name="indicator">The indicator to use for computing the z-score (e.g. BMI, Height-for-Age, Weight-for-Age)</param>
-        /// <param name="age">The age of the child in months. Must be greater than or equal to zero. Automatically rounded to 5 decimal values.</param>
-        /// <param name="measurement">The raw measurement value in metric units. Must be greater than or equal to zero.</param>
+        /// <param name="measurement">
+        /// The first measurement value. Must be in metric units and must be greater than or equal to zero. For 
+        /// example, if the indicator is 'Height-for-Age', then measurement represents the child's height in 
+        /// centimeters. If using 'Weight-for-Age', then the measurement represents the child's weight in
+        /// kilograms.
+        /// </param>
+        /// <param name="age">The age of the child in months. Must be greater than or equal to 61. Automatically rounded to 5 decimal values.</param>
         /// <param name="sex">Whether the child is male or female</param>
         /// <returns>double; the z-score for the given inputs</return>
-        public double CalculateZScore(Indicator indicator, double age, double measurement, Sex sex)
+        internal double CalculateZScore(Indicator indicator, double measurement, double age, Sex sex)
         {
             if (measurement < 0)
             {
@@ -135,7 +129,7 @@ namespace AnthStat.Statistics
 
             switch (indicator)
             {
-                case Indicator.BMIForAge:
+                case Indicator.BodyMassIndexForAge:
                     reference = WHO2007_BMI;
                     break;
                 case Indicator.WeightForAge:
@@ -154,13 +148,31 @@ namespace AnthStat.Statistics
 
             if (found)
             {
-                return StatHelper.CalculateZScore(measurement, lookup.L, lookup.M, lookup.S, true);
-            }            
+                return StatisticsHelper.CalculateZScore(measurement, lookup.L, lookup.M, lookup.S, true);
+            }
             else 
             {
                 var interpolatedValues = InterpolateLMS(sex, age, reference);
-                return StatHelper.CalculateZScore(measurement, interpolatedValues.Item1, interpolatedValues.Item2, interpolatedValues.Item3, true);
+                return StatisticsHelper.CalculateZScore(measurement, interpolatedValues.Item1, interpolatedValues.Item2, interpolatedValues.Item3, true);
             }
+        }
+
+        /// <summary>
+        /// Builds a dictionary key using a provided sex and measurement value.
+        /// </summary>
+        /// <param name="measurement">The measurement in metric units</param>
+        /// <param name="sex">Whether the child is male or female</param>
+        /// <returns>int; represents the integer dictionary key for the given sex and measurement values</returns>
+        internal int BuildKey(Sex sex, double measurement)
+        {
+            if (StatisticsHelper.IsWholeNumber(measurement))
+            {
+                int sexKeyPart = sex == Sex.Male ? 1 : 2;
+                int measurementKeyPart = (int)(measurement * 100) + sexKeyPart;
+                return measurementKeyPart;
+            }
+            
+            return -1;
         }
 
         /// <summary>

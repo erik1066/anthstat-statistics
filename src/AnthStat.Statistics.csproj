@@ -11,11 +11,11 @@
     <Description>AnthStat computes z-scores and percentiles for children and adolescents using the WHO 2006 Child Growth Standards, the WHO 2007 Growth Reference, and the CDC 2000 Growth Charts. This project is affiliated with neither CDC nor WHO.</Description>
     <Copyright>Copyright © 2017 Erik Knudsen</Copyright>
     <PackageLicenseUrl>https://opensource.org/licenses/Apache-2.0</PackageLicenseUrl>
-    <PackageTags>anthropometry nutrition statistics zscore z-score</PackageTags>
+    <PackageTags>anthropometry nutrition statistics zscore z-score percentile percentiles growth-charts c#</PackageTags>
     <PackageProjectUrl>https://gitlab.com/eknudsen/anthstat-statistics</PackageProjectUrl>
     <RepositoryUrl>https://gitlab.com/eknudsen/anthstat-statistics</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <PackageVersion>2.0.0</PackageVersion>
+    <PackageVersion>3.0.0</PackageVersion>
+    <Version>3.0.0</Version>
   </PropertyGroup>
-
 </Project>

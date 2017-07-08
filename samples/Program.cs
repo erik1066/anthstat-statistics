@@ -8,45 +8,64 @@ namespace samples
     {
         static void Main(string[] args)
         {
-            // This is how you check to see if inputs are out-of-range before calling the method that computes the z-score
-            double ageMonths = 17; 
-            
-            var cdc2000 = new AnthStat.Statistics.CDC2000();
-            bool isValid = cdc2000.IsValidMeasurement(Indicator.BMIForAge, ageMonths);            
+            var cdc2000 = new CDC2000();
+            var who2006 = new WHO2006();
+            var who2007 = new WHO2007();
 
-            if (!isValid)
-            {
-                Console.WriteLine($"{ageMonths} is not a valid age in months for the CDC 2000 BMI-for-age indicator.");
-            }
-            else 
-            {
-                Console.WriteLine($"{ageMonths} is a valid age in months for the CDC 2000 BMI-for-age indicator.");
-            }
-
-            Console.WriteLine();
-
-            // Alternatively, you can use the TryCalculateZScore method to the same as the above, though this also calculates
-            // the z-score if the check is successful:
-
-            ageMonths = 26; 
+            // Calculates a BMI-for-age z-score using CDC 2000
+            double ageMonths = 26; 
             double z = 0.0;
             double bmi = 18.0;
-            if (cdc2000.TryCalculateZScore(Indicator.BMIForAge, ageMonths, bmi, Sex.Female, ref z))
+
+            if (cdc2000.TryCalculateZScore(indicator: Indicator.BodyMassIndexForAge, measurement1: bmi, measurement2: ageMonths, sex: Sex.Female, z: ref z))
             {
-                double p = StatHelper.CalculatePercentile(z);
+                double p = StatisticsHelper.CalculatePercentile(z);
+
                 z = Math.Round(z, 2);
                 p = Math.Round(p, 2);
-                Console.WriteLine($"[CDC 2000] - {ageMonths} month old female with BMI = {bmi} has z-score of {z.ToString("N2")} and percentile of {p.ToString("N2")}");                
+
+                Console.WriteLine($"[CDC 2000] - {ageMonths} month old female with BMI = {bmi} has z-score of {z} and percentile of {p}");                
             }
             else
             {
                 Console.WriteLine($"{ageMonths} is a valid age in months for the CDC 2000 BMI-for-age indicator.");
             }
 
-            // Look at these methods for examples of how to generate z-scores and percentiles for a given set of inputs
-            GetBodyMassIndexCDC2000();
-            GetBodyMassIndexWHO2006();
-            GetBodyMassIndexWHO2007();
+            // Calculates a BMI-for-age z-score using WHO 2006
+            double ageDays = 32; 
+            bmi = 16;
+
+            if (who2006.TryCalculateZScore(indicator: Indicator.BodyMassIndexForAge, measurement1: bmi, measurement2: ageDays, sex: Sex.Female, z: ref z))
+            {
+                double p = StatisticsHelper.CalculatePercentile(z);
+
+                z = Math.Round(z, 2);
+                p = Math.Round(p, 2);
+
+                Console.WriteLine($"[WHO 2006] - {ageDays} day old female with BMI = {bmi} has z-score of {z} and percentile of {p}");
+            }
+            else
+            {
+                Console.WriteLine($"{ageMonths} is a valid age in days for the WHO 2006 BMI-for-age indicator.");
+            }
+
+            // Calculates a BMI-for-age z-score using WHO 2007
+            ageMonths = 64; 
+            bmi = 17;
+
+            if (who2007.TryCalculateZScore(indicator: Indicator.BodyMassIndexForAge, measurement: bmi, age: ageMonths, sex: Sex.Female, z: ref z))
+            {
+                double p = StatisticsHelper.CalculatePercentile(z);
+
+                z = Math.Round(z, 2);
+                p = Math.Round(p, 2);
+
+                Console.WriteLine($"[WHO 2007] - {ageMonths} month old male with BMI = {bmi} has z-score of {z} and percentile of {p}");
+            }
+            else
+            {
+                Console.WriteLine($"{ageMonths} is a valid age in months for the WHO 2007 BMI-for-age indicator.");
+            }
 
             Console.WriteLine();
 
@@ -54,58 +73,14 @@ namespace samples
             TestCDC2000ComputeSpeed(true); // forces test to use interpolation of L, M, and S values (more computationally expensive)
             TestCDC2000ComputeSpeed(false); // forces test to never use interpolation
 
+            Console.WriteLine();
+
             TestWHO2006ComputeSpeed(); // WHO 2006 standard doesn't typically need interpolation since age is measured in days, and trying to interpolate LMS values between e.g. day 66 and 67 is not worthwhile
+
+            Console.WriteLine();
 
             TestWHO2007ComputeSpeed(true); // forces test to use interpolation of L, M, and S values (more computationally expensive)
             TestWHO2007ComputeSpeed(false); // forces test to never use interpolation
-        }
-
-        private static void GetBodyMassIndexCDC2000()
-        {
-            var cdc2000 = new AnthStat.Statistics.CDC2000();
-
-            double bmi = 16.0;
-            double ageMonths = 32;
-
-            double z = cdc2000.CalculateZScore(Indicator.BMIForAge, ageMonths, bmi, Sex.Female);
-            double p = StatHelper.CalculatePercentile(z);
-
-            z = Math.Round(z, 2);
-            p = Math.Round(p, 2);
-
-            Console.WriteLine($"[CDC 2000] - {ageMonths} month old female with BMI = {bmi} has z-score of {z.ToString("N2")} and percentile of {p.ToString("N2")}");
-        }
-
-        private static void GetBodyMassIndexWHO2006()
-        {
-            var who2006 = new AnthStat.Statistics.WHO2006();
-
-            double bmi = 16.0;
-            double ageDays = 32;
-
-            double z = who2006.CalculateZScore(Indicator.BMIForAge, ageDays, bmi, Sex.Female);
-            double p = StatHelper.CalculatePercentile(z);
-
-            z = Math.Round(z, 2);
-            p = Math.Round(p, 2);
-
-            Console.WriteLine($"[WHO 2006] - {ageDays} day old female with BMI = {bmi} has z-score of {z.ToString("N2")} and percentile of {p.ToString("N2")}");
-        }
-
-        private static void GetBodyMassIndexWHO2007()
-        {
-            var who2007 = new AnthStat.Statistics.WHO2007();
-
-            double bmi = 17.0;
-            double ageMonths = 64;
-
-            double z = who2007.CalculateZScore(Indicator.BMIForAge, ageMonths, bmi, Sex.Male);
-            double p = StatHelper.CalculatePercentile(z);
-
-            z = Math.Round(z, 2);
-            p = Math.Round(p, 2);
-
-            Console.WriteLine($"[WHO 2007] - {ageMonths} month old male with BMI = {bmi} has z-score of {z.ToString("N2")} and percentile of {p.ToString("N2")}");
         }
 
         private static void TestWHO2007ComputeSpeed(bool forceInterpolate)
@@ -136,13 +111,14 @@ namespace samples
             sw.Start();
 
             for (int i = 0; i < loopIterations; i++)
-            {                
-                who2007.CalculateZScore(Indicator.BMIForAge, ageMonths[i], bmis[i], sexes[i]);
+            {
+                double z = 0.0;
+                bool success = who2007.TryCalculateZScore(indicator: Indicator.BodyMassIndexForAge, measurement: bmis[i], age: ageMonths[i], sex: sexes[i], z: ref z);
             }
 
             sw.Stop();
 
-            Console.WriteLine($"Computed {loopIterations} WHO 2007 z-scores in {sw.Elapsed.TotalMilliseconds.ToString("N0")} milliseconds [interpolate = {forceInterpolate}]");
+            Console.WriteLine($"[WHO 2007] - Computed {loopIterations} z-scores in {sw.Elapsed.TotalMilliseconds.ToString("N0")} milliseconds [interpolate = {forceInterpolate}]");
         }
 
         private static void TestWHO2006ComputeSpeed()
@@ -168,13 +144,14 @@ namespace samples
             sw.Start();
 
             for (int i = 0; i < loopIterations; i++)
-            {                
-                who2006.CalculateZScore(Indicator.BMIForAge, ageDays[i], bmis[i], sexes[i]);
+            {
+                double z = 0.0;
+                who2006.TryCalculateZScore(Indicator.BodyMassIndexForAge, bmis[i], ageDays[i], sexes[i], ref z);
             }
 
             sw.Stop();
 
-            Console.WriteLine($"Computed {loopIterations} WHO 2006 z-scores in {sw.Elapsed.TotalMilliseconds.ToString("N0")} milliseconds.");
+            Console.WriteLine($"[WHO 2006] - Computed {loopIterations} z-scores in {sw.Elapsed.TotalMilliseconds.ToString("N0")} milliseconds.");
         }
 
         private static void TestCDC2000ComputeSpeed(bool forceInterpolate)
@@ -207,24 +184,26 @@ namespace samples
             sw.Start();
 
             for (int i = 0; i < loopIterations; i++)
-            {                
-                cdc2000.CalculateZScore(Indicator.BMIForAge, ageDays[i], bmis[i], sexes[i]);
+            {
+                double z = 0.0;  
+                cdc2000.TryCalculateZScore(Indicator.BodyMassIndexForAge, bmis[i], ageDays[i], sexes[i], ref z);
             }
 
             sw.Stop();
 
-            Console.WriteLine($"Computed {loopIterations} CDC 2000 z-scores in {sw.Elapsed.TotalMilliseconds.ToString("N0")} milliseconds [SERIAL] [interpolate = {forceInterpolate}]");
+            Console.WriteLine($"[CDC 2000] [Serial]   - Computed {loopIterations} z-scores in {sw.Elapsed.TotalMilliseconds.ToString("N0")} milliseconds [interpolate = {forceInterpolate}]");
 
             // Shows how one might batch-process z-scores across several threads using .NET's task parallel library
             sw.Reset();
             sw.Start();
             Parallel.ForEach(index, (i) =>
             {
-                cdc2000.CalculateZScore(Indicator.BMIForAge, ageDays[i], bmis[i], sexes[i]);
+                double z = 0.0;
+                cdc2000.TryCalculateZScore(Indicator.BodyMassIndexForAge, bmis[i], ageDays[i], sexes[i], ref z);
             });
             sw.Stop();
 
-            Console.WriteLine($"Computed {loopIterations} CDC 2000 z-scores in {sw.Elapsed.TotalMilliseconds.ToString("N0")} milliseconds [PARALLEL] [interpolate = {forceInterpolate}]");
+            Console.WriteLine($"[CDC 2000] [Parallel] - Computed {loopIterations} z-scores in {sw.Elapsed.TotalMilliseconds.ToString("N0")} milliseconds [interpolate = {forceInterpolate}]");
         }
     }
 }

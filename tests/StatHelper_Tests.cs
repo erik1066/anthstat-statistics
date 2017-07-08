@@ -19,12 +19,12 @@ namespace AnthStat.Statistics.Tests
 
             foreach (var whole in wholes)
             {
-                Assert.True(StatHelper.IsWholeNumber(whole));
+                Assert.True(StatisticsHelper.IsWholeNumber(whole));
             }
 
             foreach (var notWhole in notWholes)
             {
-                Assert.False(StatHelper.IsWholeNumber(notWhole));
+                Assert.False(StatisticsHelper.IsWholeNumber(notWhole));
             }
         }
 
@@ -39,7 +39,7 @@ namespace AnthStat.Statistics.Tests
         [InlineData(16.52, -0.405, 16.5506, 0.08652, -0.0213971396073446674965169466961)]
         public void GetZ_Success(double rawValue, double L, double M, double S, double z)
         {
-            Assert.True(Math.Abs(z - StatHelper.CalculateZScore(rawValue, L, M, S)) < 0.0000000000001);
+            Assert.True(Math.Abs(z - StatisticsHelper.CalculateZScore(rawValue, L, M, S)) < TOLERANCE);
         }
 
         [Theory]
@@ -73,7 +73,7 @@ namespace AnthStat.Statistics.Tests
         [InlineData(4.5, 99.9997)]
         public void GetPercentile_Success(double z, double p)
         {
-            double result = StatHelper.CalculatePercentile(z);
+            double result = StatisticsHelper.CalculatePercentile(z);
             double diff = Math.Abs(p - result);
             Assert.True(diff < PERCENTILE_TOLERANCE);
         }
@@ -84,225 +84,7 @@ namespace AnthStat.Statistics.Tests
         {
             Assert.Throws<ArgumentException>(delegate 
             {
-                z = StatHelper.CalculateZScore(rawValue, L, M, S);
-            });
-        }
-
-        [Fact]
-        public void InterpolateLMS_ByOne_UnderHalf_Success()
-        {
-            List<Lookup> reference = new List<Lookup>()
-            {
-                new Lookup(Sex.Female, 346, 1, 73.2332, 0.03469),
-                new Lookup(Sex.Female, 347, 1, 73.2743, 0.0347),
-                new Lookup(Sex.Female, 348, 1, 73.3152, 0.0347)
-            };
-
-            var result = StatHelper.InterpolateLMS(347.1, Sex.Female, reference, InterpolationMode.Ones);
-
-            Assert.True(Math.Abs(result.Item1 - 1.0) < TOLERANCE);
-            Assert.True(Math.Abs(result.Item2 - 73.27839) < TOLERANCE);
-            Assert.True(Math.Abs(result.Item3 - 0.0347) < TOLERANCE);
-        }
-
-        [Fact]
-        public void InterpolateLMS_ByTenths_UnderHalf_Success()
-        {
-            List<Lookup> reference = new List<Lookup>()
-            {
-                new Lookup(Sex.Female, 347.2, 1, 73.2332, 0.03469),
-                new Lookup(Sex.Female, 347.3, 1, 73.2743, 0.0347),
-                new Lookup(Sex.Female, 347.4, 1, 73.3152, 0.0347)
-            };
-
-            var result = StatHelper.InterpolateLMS(347.31, Sex.Female, reference, InterpolationMode.Tenths);
-
-            Assert.True(Math.Abs(result.Item1 - 1.0) < TOLERANCE);
-            Assert.True(Math.Abs(result.Item2 - 73.27839) < TOLERANCE);
-            Assert.True(Math.Abs(result.Item3 - 0.0347) < TOLERANCE);
-        }
-
-        [Fact]
-        public void InterpolateLMS_ByTenths_HighPrecision_Success()
-        {
-            List<Lookup> reference = new List<Lookup>()
-            {
-                new Lookup(Sex.Female, 97.0, 97.0, 73.2332, 0.03469),
-                new Lookup(Sex.Female, 97.1, 97.1, 73.2332, 0.03469),
-                new Lookup(Sex.Female, 97.2, 97.2, 73.2332, 0.03469),
-                new Lookup(Sex.Female, 97.3, 97.3, 73.2332, 0.03469),
-                new Lookup(Sex.Female, 97.4, 97.4, 73.2332, 0.03469),
-                new Lookup(Sex.Female, 97.5, 97.5, 73.2332, 0.03469),
-                new Lookup(Sex.Female, 97.6, 97.6, 73.2332, 0.03469),
-                new Lookup(Sex.Female, 97.7, 97.7, 73.2332, 0.03469),
-                new Lookup(Sex.Female, 97.8, 97.8, 73.2332, 0.03469),
-                new Lookup(Sex.Female, 97.9, 97.9, 73.2332, 0.03469),
-                new Lookup(Sex.Female, 98.0, 98.0, 73.2332, 0.03469),
-                new Lookup(Sex.Female, 98.1, 98.1, 73.2332, 0.03469),
-                new Lookup(Sex.Female, 98.2, 98.2, 73.2332, 0.03469),
-                new Lookup(Sex.Female, 98.3, 98.3, 73.2332, 0.03469),
-                new Lookup(Sex.Female, 98.4, 98.4, 73.2332, 0.03469),
-                new Lookup(Sex.Female, 98.5, 98.5, 73.2332, 0.03469),
-                new Lookup(Sex.Female, 98.6, 98.6, 73.2332, 0.03469),
-                new Lookup(Sex.Female, 98.7, 98.7, 73.2332, 0.03469),
-                new Lookup(Sex.Female, 98.8, 98.8, 73.2332, 0.03469),
-                new Lookup(Sex.Female, 98.9, 98.9, 73.2332, 0.03469),
-                new Lookup(Sex.Female, 99.0, 99.0, 73.2332, 0.03469),
-                new Lookup(Sex.Female, 99.1, 99.1, 73.2332, 0.03469),
-                new Lookup(Sex.Female, 99.2, 99.2, 73.2332, 0.03469),
-                new Lookup(Sex.Female, 99.3, 99.3, 73.2332, 0.03469),
-                new Lookup(Sex.Female, 99.4, 99.4, 73.2332, 0.03469),
-                new Lookup(Sex.Female, 99.5, 99.5, 73.2332, 0.03469),
-                new Lookup(Sex.Female, 99.6, 99.6, 73.2332, 0.03469),
-                new Lookup(Sex.Female, 99.7, 99.7, 73.2332, 0.03469),
-                new Lookup(Sex.Female, 99.8, 99.8, 73.2332, 0.03469),
-                new Lookup(Sex.Female, 99.9, 99.9, 73.2332, 0.03469)                
-            };
-
-            Parallel.ForEach(reference, (Lookup) =>
-            {
-                double startValue = Lookup.L + 0.00001;
-                double endValue = Lookup.L + 0.1;
-
-                if (startValue >= 99.89999) return;
-
-                for(double i = startValue; i < endValue; i = i + 0.00001)
-                {
-                    var result = StatHelper.InterpolateLMS(i, Sex.Female, reference, InterpolationMode.Tenths);
-                    Assert.True(Math.Abs(result.Item1 - i) < TOLERANCE);
-                }
-            });            
-        }
-
-        [Fact]
-        public void InterpolateLMS_ByOne_OverHalf_Success()
-        {
-            List<Lookup> reference = new List<Lookup>()
-            {
-                new Lookup(Sex.Female, 346, 1, 73.2332, 0.03469),
-                new Lookup(Sex.Female, 347, 2, 73.2743, 0.0347),
-                new Lookup(Sex.Female, 348, 3, 73.3152, 0.0347)
-            };
-
-            var result = StatHelper.InterpolateLMS(347.6, Sex.Female, reference, InterpolationMode.Ones);
-
-            Assert.True(Math.Abs(result.Item1 - 2.6) < TOLERANCE);
-            Assert.True(Math.Abs(result.Item2 - 73.29884) < TOLERANCE);
-            Assert.True(Math.Abs(result.Item3 - 0.0347) < TOLERANCE);
-        }
-
-        [Fact]
-        public void InterpolateLMS_ByTenths_OverHalf_Success()
-        {
-            List<Lookup> reference = new List<Lookup>()
-            {
-                new Lookup(Sex.Female, 347.2, 1, 73.2332, 0.03469),
-                new Lookup(Sex.Female, 347.3, 2, 73.2743, 0.0347),
-                new Lookup(Sex.Female, 347.4, 3, 73.3152, 0.0347)
-            };
-
-            var result = StatHelper.InterpolateLMS(347.36, Sex.Female, reference, InterpolationMode.Tenths);
-
-            Assert.True(Math.Abs(result.Item1 - 2.6) < TOLERANCE);
-            Assert.True(Math.Abs(result.Item2 - 73.29884) < TOLERANCE);
-            Assert.True(Math.Abs(result.Item3 - 0.0347) < TOLERANCE);
-        }
-
-        [Fact]
-        public void InterpolateLMS_ByOne_ZeroPoint_Success()
-        {
-            List<Lookup> reference = new List<Lookup>()
-            {
-                new Lookup(Sex.Female, 346, 1, 73.2332, 0.03469),
-                new Lookup(Sex.Female, 347, 2, 73.2743, 0.0347),
-                new Lookup(Sex.Female, 348, 3, 73.3152, 0.0347)
-            };
-
-            var result = StatHelper.InterpolateLMS(347, Sex.Female, reference, InterpolationMode.Ones);
-
-            Assert.True(Math.Abs(result.Item1 - 2) < TOLERANCE);
-            Assert.True(Math.Abs(result.Item2 - 73.2743) < TOLERANCE);
-            Assert.True(Math.Abs(result.Item3 - 0.0347) < TOLERANCE);
-        }
-
-        [Fact]
-        public void InterpolateLMS_ByTenths_ZeroPoint_Success()
-        {
-            List<Lookup> reference = new List<Lookup>()
-            {
-                new Lookup(Sex.Female, 347.2, 1, 73.2332, 0.03469),
-                new Lookup(Sex.Female, 347.3, 2, 73.2743, 0.0347),
-                new Lookup(Sex.Female, 347.4, 3, 73.3152, 0.0347)
-            };
-
-            var result = StatHelper.InterpolateLMS(347.3, Sex.Female, reference, InterpolationMode.Tenths);
-
-            Assert.True(Math.Abs(result.Item1 - 2) < TOLERANCE);
-            Assert.True(Math.Abs(result.Item2 - 73.2743) < TOLERANCE);
-            Assert.True(Math.Abs(result.Item3 - 0.0347) < TOLERANCE);
-        }
-
-        [Fact]
-        public void InterpolateLMS_ByOne_TooLow_Fail()
-        {
-            List<Lookup> reference = new List<Lookup>()
-            {
-                new Lookup(Sex.Female, 346, 1, 73.2332, 0.03469),
-                new Lookup(Sex.Female, 347, 2, 73.2743, 0.0347),
-                new Lookup(Sex.Female, 348, 3, 73.3152, 0.0347)
-            };
-
-            Assert.Throws<InvalidOperationException>(delegate 
-            { 
-                var result = StatHelper.InterpolateLMS(345.5, Sex.Female, reference, InterpolationMode.Ones);
-            });
-        }
-
-        [Fact]
-        public void InterpolateLMS_ByOne_TooHigh_Fail()
-        {
-            List<Lookup> reference = new List<Lookup>()
-            {
-                new Lookup(Sex.Female, 346, 1, 73.2332, 0.03469),
-                new Lookup(Sex.Female, 347, 2, 73.2743, 0.0347),
-                new Lookup(Sex.Female, 348, 3, 73.3152, 0.0347)
-            };
-
-            Assert.Throws<InvalidOperationException>(delegate 
-            { 
-                var result = StatHelper.InterpolateLMS(348.1, Sex.Female, reference, InterpolationMode.Ones);
-            });
-        }
-
-        [Fact]
-        public void InterpolateLMS_ByTenths_TooLow_Fail()
-        {
-            List<Lookup> reference = new List<Lookup>()
-            {
-                new Lookup(Sex.Female, 347.2, 1, 73.2332, 0.03469),
-                new Lookup(Sex.Female, 347.3, 2, 73.2743, 0.0347),
-                new Lookup(Sex.Female, 347.4, 3, 73.3152, 0.0347)
-            };
-
-            Assert.Throws<InvalidOperationException>(delegate 
-            { 
-                var result = StatHelper.InterpolateLMS(347.15, Sex.Female, reference, InterpolationMode.Ones);
-            });
-        }
-
-        [Fact]
-        public void InterpolateLMS_ByTenths_TooHigh_Fail()
-        {
-            List<Lookup> reference = new List<Lookup>()
-            {
-                new Lookup(Sex.Female, 347.2, 1, 73.2332, 0.03469),
-                new Lookup(Sex.Female, 347.3, 2, 73.2743, 0.0347),
-                new Lookup(Sex.Female, 347.4, 3, 73.3152, 0.0347)
-            };
-
-            Assert.Throws<InvalidOperationException>(delegate 
-            { 
-                var result = StatHelper.InterpolateLMS(347.41, Sex.Female, reference, InterpolationMode.Ones);
+                z = StatisticsHelper.CalculateZScore(rawValue, L, M, S);
             });
         }
     }

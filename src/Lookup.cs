@@ -9,12 +9,12 @@ namespace AnthStat.Statistics
     /// Represents a lookup table entry.
     /// </summary>
     /// <remarks>
-    ///     Lookup tables are used to pull the appropriate L, M, and S values for a 
-    ///     given measurement (the measurement is typically age in either days or 
-    ///     months, but may also be height or length in centimeters) and sex (either
-    ///     male or female). This class represents a row in such a table.
+    /// Lookup tables are used to pull the appropriate L, M, and S values for a 
+    /// given measurement (the measurement is typically age in either days or 
+    /// months, but may also be height or length in centimeters) and sex (either
+    /// male or female). This class represents a row in such a table.
     /// </remarks>
-    internal sealed class Lookup : IComparable<Lookup>
+    internal sealed class Lookup
     {
         /// <summary>
         /// Gets whether the lookup represents a male or female
@@ -75,38 +75,6 @@ namespace AnthStat.Statistics
             L = l;
             M = m;
             S = s;
-        }
-
-        public override bool Equals(object obj)
-        {
-            Lookup comparedItem = obj as Lookup;
-
-            if (comparedItem == null) return false;
-
-            return (comparedItem.Sex == this.Sex && comparedItem.Measurement == this.Measurement);
-        }
-
-        public override int GetHashCode()
-        {
-            return Sex == Sex.Male ? (int)(this.Measurement * 10000) : (int)(this.Measurement * 10000 * 10);
-        }
-
-        public int CompareTo(Lookup that)
-        {
-            if (this.Sex == that.Sex)
-            {
-                if (this.Measurement > that.Measurement) return 1;
-                if (this.Measurement == that.Measurement) return 0;
-                return -1;
-            }
-            else if (this.Sex == Sex.Male && that.Sex == Sex.Female)
-            {
-                return -1;
-            }
-            else
-            {
-                return 1;
-            }
         }
     }
 }

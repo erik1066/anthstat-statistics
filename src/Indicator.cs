@@ -7,7 +7,7 @@
         WeightForAge,
         WeightForLength,
         WeightForHeight,
-        BMIForAge,
+        BodyMassIndexForAge,
         HeadCircumferenceForAge,
         ArmCircumferenceForAge,
         SubscapularSkinfoldForAge,
