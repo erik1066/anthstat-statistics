@@ -79,12 +79,12 @@ namespace AnthStat.Statistics.Tests
         }
 
         [Theory]
-        [InlineData(16.52, -0.405, 16.6, 0.0, 1.0)]
-        public void GetZ_ZeroS_Fail(double rawValue, double L, double M, double S, double z)
+        [InlineData(16.52, -0.405, 16.6, 0.0)]
+        public void GetZ_ZeroS_Fail(double rawValue, double L, double M, double S)
         {
-            Assert.Throws<ArgumentException>(delegate 
+            Assert.Throws<ArgumentException>(delegate
             {
-                z = StatisticsHelper.CalculateZScore(rawValue, L, M, S);
+                double z = StatisticsHelper.CalculateZScore(rawValue, L, M, S);
             });
         }
     }
