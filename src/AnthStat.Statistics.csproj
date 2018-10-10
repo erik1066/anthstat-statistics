@@ -17,7 +17,7 @@
     <PackageProjectUrl>https://gitlab.com/eknudsen/anthstat-statistics</PackageProjectUrl>
     <RepositoryUrl>https://gitlab.com/eknudsen/anthstat-statistics</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <PackageVersion>3.0.0</PackageVersion>
-    <Version>3.0.0</Version>
+    <PackageVersion>3.1.0</PackageVersion>
+    <Version>3.1.0</Version>
   </PropertyGroup>
 </Project>
