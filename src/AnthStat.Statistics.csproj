@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netcoreapp1.1;netcoreapp2.1;net47;net462;net461;netstandard1.0;netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>netcoreapp1.1;netcoreapp2.0;netcoreapp2.1;net47;net462;net461;netstandard1.0;netstandard2.0</TargetFrameworks>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
     <Authors>Erik Knudsen</Authors>
@@ -12,10 +12,10 @@
     <Title>Anthropometry Statistics Library</Title>
     <Description>AnthStat computes z-scores and percentiles for children and adolescents using the WHO 2006 Child Growth Standards, the WHO 2007 Growth Reference, and the CDC 2000 Growth Charts. This project is affiliated with neither CDC nor WHO.</Description>
     <Copyright>Copyright © 2017 Erik Knudsen</Copyright>
-    <PackageLicenseUrl>https://opensource.org/licenses/Apache-2.0</PackageLicenseUrl>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageTags>anthropometry nutrition statistics zscore z-score percentile percentiles growth-charts c#</PackageTags>
-    <PackageProjectUrl>https://gitlab.com/eknudsen/anthstat-statistics</PackageProjectUrl>
-    <RepositoryUrl>https://gitlab.com/eknudsen/anthstat-statistics</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/erik1066/anthstat-statistics</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/erik1066/anthstat-statistics</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageVersion>3.1.0</PackageVersion>
     <Version>3.1.0</Version>
