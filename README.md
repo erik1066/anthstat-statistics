@@ -1,6 +1,6 @@
-Latest version: [NuGet Package](https://www.nuget.org/packages/AnthStat.Statistics/3.0.0) (8 July 2017)
+# Anthropometry Statistics Library for .NET
 
-# Description
+[![NuGet version (AnthStat.Statistics)](https://img.shields.io/nuget/v/AnthStat.Statistics.svg?style=flat-square)](https://www.nuget.org/packages/AnthStat.Statistics/)
 
 AnthStat computes z-scores for children and adolescents using the WHO 2006 Child Growth Standards, the WHO 2007 Growth Reference, and the CDC 2000 Growth Charts. Z-scores can be used to determine if a child is growing appropriately and to predict their expected adult height and weight. 
 
@@ -37,7 +37,7 @@ For more information and further documentation:
 
 # Usage
 
-Be sure to first read and agree to the [license](LICENSE.txt) and then include the latest [NuGet Package](https://www.nuget.org/packages/AnthStat.Statistics/).
+Be sure to first read and agree to the [license](LICENSE) and then include the latest [NuGet Package](https://www.nuget.org/packages/AnthStat.Statistics/).
 
 To compute a z-score and percentile for a 64 month-old male who has a body mass index (BMI) of 17 using the WHO 2007 Growth Reference:
 
