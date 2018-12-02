@@ -17,7 +17,7 @@
     <PackageProjectUrl>https://github.com/erik1066/anthstat-statistics</PackageProjectUrl>
     <RepositoryUrl>https://github.com/erik1066/anthstat-statistics</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <PackageVersion>3.1.0</PackageVersion>
-    <Version>3.1.0</Version>
+    <PackageVersion>3.1.1</PackageVersion>
+    <Version>3.1.1</Version>
   </PropertyGroup>
 </Project>
